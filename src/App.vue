@@ -35,74 +35,39 @@
             </v-btn>
         </v-app-bar>
 
-            <div id="canvas"></div>
+            <!-- <div id="canvas"></div> -->
         <v-content>
-
-            <v-btn @click="getModdle">Acessar</v-btn>
+            <v-slide-x-transition mode="out-in">
+                <router-view></router-view>
+            </v-slide-x-transition>
         </v-content>
     </v-app>
 </template>
 
 <script>
-import Modeler from 'bpmn-js/lib/Modeler';
-var convert = require('xml-js');
-
 export default {
-    name: 'App',
-
-    data: () => ({
-        modeler: undefined
-    }),
-    methods: {
-        getModdle() {
-            console.log(this.modeler)
-            
-
-            this.modeler.saveXML({ format: true }, (err, xml) => {
-                if (err) {
-                return console.error('could not export BPMN 2.0 diagram xml', err);
-                }
-                const xmlClone = xml;
-                var result1 = convert.xml2json(xml, {compact: true, spaces: 4});
-                var result2 = convert.xml2json(xml, {compact: false, spaces: 4});
-                
-                console.log(result1, '\n', result2);
-                console.log(xmlClone);
-            });
-        }
-    },
-    mounted() {
-        var stringS = `<bpmn:definitions id="Definitions_0717aml" targetNamespace="http://bpmn.io/schema/bpmn" exporter="bpmn-js (https://demo.bpmn.io)" exporterVersion="6.3.1">
-            <bpmn:process id="Process_14kdvgu" isExecutable="false"/>
-            <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-            <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_14kdvgu"/>
-            </bpmndi:BPMNDiagram>
-        </bpmn:definitions>`
-
-        let diagram = require("./plugins/diagram")
-        let result3 = convert.json2xml(diagram, {compact: true, spaces: 2})
-        result3 = result3.replace('<default>',"")
-        result3 = result3.replace('</default>',"")
-
-        console.log(result3)
-        this.modeler = new Modeler({ container: '#canvas' });
-        this.modeler.importXML(result3  , function(err) {
-
-            if (err) {
-            console.log('error rendering', err);
-            } else {
-            console.log('we are good!');
-            }
-        });
-        
-    }
+    name: 'App'
 };
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 #canvas {
     width: 100%;
     height: 100%;
     overflow: hidden;
+}
+
+.bpmn-icon-intermediate-event-none,
+.bpmn-icon-subprocess-expanded,
+.bpmn-icon-data-store,
+.bpmn-icon-participant,
+.bpmn-icon-group {
+    display: none !important;
+}
+
+.djs-palette {
+    top: 100px !important;
+    right: 20px !important;
+    left: unset !important;
 }
 </style>
