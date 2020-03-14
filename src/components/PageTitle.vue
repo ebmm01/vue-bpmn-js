@@ -1,5 +1,5 @@
 <template>
-    <div class="page-title d-flex mt-6 align-center">
+    <div class="page-title d-flex align-center">
         <v-toolbar 
             flat 
             class="px-0"

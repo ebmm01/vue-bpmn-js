@@ -3,71 +3,13 @@
         id="sample" 
         class="workflow-section"
         style="heigth:100%">
-
-        <div class="workflow-details">
-            <page-title 
-                :title="workflowName"
-                :description="workflowDescription"/>
-
-            <v-tabs 
-                @change="updateTabs"
-                vertical>
-                <v-tab>
-                    <v-icon left>mdi-graph</v-icon>
-                    Workflow
-                </v-tab>
-                <v-tab>
-                    <v-icon left>mdi-cards-variant</v-icon>
-                    Steps
-                </v-tab>
-
-                <v-tab>
-                    <v-icon left>mdi-toy-brick-outline</v-icon>
-                    Components
-                </v-tab>
-                
-                <v-tab-item
-                    eager>
-                    <workflow-editor
-                        :downloadWorkflow="generateJSON"
-                        :forceUpdate="forceWorkflowUpdate"/>
-
-                </v-tab-item>
-                <v-tab-item
-                    eager>
-                    <steps 
-                        :updateData="stepsDetails"/>
-
-                </v-tab-item>
-
-                <v-tab-item
-                    eager>
-                    <components />
-
-                </v-tab-item>
-                
-            </v-tabs>
-
-            <v-card class="py-4 px-2 d-flex">
-                
-                <v-btn 
-                    href="#"
-                    depressed
-                    color="primary"
-                    class="mx-2"
-                    @click="downloadWorkflow" 
-                    id="downloadWorkflow">
-                    Baixar JSON
-                </v-btn>
-            </v-card>
-        </div>
         <div
             class="workflow-list">
-            <!-- <page-title 
+             <page-title 
                 :showBack="false"
                 title="Workflow list"
-                description=" "/>
-
+                description="ss "/>
+            <!--
             <ul 
                 style="list-style:none;"
                 class="pl-0">
@@ -120,6 +62,63 @@
                     </div>
                 </li>
             </ul> -->
+        </div>
+        
+        <div class="workflow-details">
+            <page-title 
+                :title="workflowName"
+                :description="workflowDescription"/>
+
+            <v-tabs 
+                @change="updateTabs">
+                <v-tab>
+                    <v-icon left>mdi-graph</v-icon>
+                    Workflow
+                </v-tab>
+                <v-tab>
+                    <v-icon left>mdi-cards-variant</v-icon>
+                    Steps
+                </v-tab>
+
+                <v-tab>
+                    <v-icon left>mdi-toy-brick-outline</v-icon>
+                    Components
+                </v-tab>
+                
+                <v-tab-item
+                    eager>
+                    <workflow-editor
+                        :downloadWorkflow="generateJSON"
+                        :forceUpdate="forceWorkflowUpdate"/>
+
+                </v-tab-item>
+                <v-tab-item
+                    eager>
+                    <steps 
+                        :updateData="stepsDetails"/>
+
+                </v-tab-item>
+
+                <v-tab-item
+                    eager>
+                    <components />
+
+                </v-tab-item>
+                
+            </v-tabs>
+
+            <v-card class="py-4 px-2 d-flex">
+                
+                <v-btn 
+                    href="#"
+                    depressed
+                    color="primary"
+                    class="mx-2"
+                    @click="downloadWorkflow" 
+                    id="downloadWorkflow">
+                    Baixar JSON
+                </v-btn>
+            </v-card>
         </div>
     </section>
 </template>
@@ -193,16 +192,18 @@ export default {
 .workflow-section {
     display: flex;
     flex-grow: 1;
+    height: 100%;
 
     .workflow-details {
         width: 100%;
-        margin-right: 10px;
+        margin-left: 10px;
+        display: flex;
+        flex-direction: column;
     }
 
     .workflow-list {
         width: 350px;
-        margin-bottom: 15px;
-        border-radius: 5px;
+        box-shadow: 1px 1px 4px 1px darkgrey;
     }
 }
 </style>

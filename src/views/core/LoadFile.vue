@@ -223,8 +223,9 @@ export default {
             if (this.wfName && this.wfDescription) {
                 this.changeWorkflowName(this.wfName)
                 this.changeWorkflowDescription(this.wfDescription)
+                this.setWorkflowData(undefined);
+                this.setSteps([]);
                 this.$router.push({path: '/workflow'})
-                this.setWorkflowData({});
             } else {
                 this.invalidName = true
                 this.invalidDescription = true

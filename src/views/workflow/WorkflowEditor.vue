@@ -52,11 +52,18 @@ export default {
             downloadWorkflowBtn.download = `${model.name.toLowerCase()}.json`
         },
         loadDiagram() {
+            let loadDiagram = undefined
+            if (!this.workflowData) {
+                loadDiagram = require('../../plugins/emptyDiagram.json')
+            } else {
+                loadDiagram = this.workflowData
+            }
 
-            let result3 = convert.json2xml(this.workflowData, {compact: true})
-            result3 = result3.replace('<default>',"")
-            result3 = result3.replace('</default>',"")
-            this.modeler.importXML(result3  , function(err) {
+            let importedModel = convert.json2xml(loadDiagram, {compact: true})
+            importedModel = importedModel.replace('<default>',"")
+            importedModel = importedModel.replace('</default>',"")
+            
+            this.modeler.importXML(importedModel  , function(err) {
                 if (err) {
                     console.log('error rendering', err);
                 } 

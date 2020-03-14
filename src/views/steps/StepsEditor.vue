@@ -68,7 +68,7 @@ export default {
                 { text: 'Nome', value: 'name' },
                 { text: 'Descrição', value: 'description' },
                 { text: 'Componente', value: 'component.name' },
-                { text: 'Condição de existência:', value: 'existenceConditions'},
+                { text: 'Condição de avanço:', value: 'existenceConditions'},
                 { text: 'ParentSteps', value: 'parentSteps' },
                 { text: 'ChildrenSteps', value: 'childrenSteps' },
                 { text: 'Ações', value: 'acoes' },
@@ -99,19 +99,26 @@ export default {
                 steps = JSON.parse(result1)
                 steps = steps["bpmn:definitions"]["bpmn:process"]
             });
-            
-            steps["bpmn:task"].map((item, index) => {
-                processSteps.push({
-                    id: item._attributes.id,
-                    name: item._attributes.name,
-                    description: this.getStepDescription(item._attributes.id),
-                    parentSteps: this.getParentSteps(item._attributes.id, steps["bpmn:sequenceFlow"]),
-                    component: this.getStepComponent(item._attributes.id, index),
-                    childrenSteps: this.getChildrenSteps(item._attributes.id, steps["bpmn:sequenceFlow"]),
-                })
-            })
-
+            if (steps["bpmn:task"]) {
+                if (steps["bpmn:task"].length > 1) {
+                    steps["bpmn:task"].map((item, index) => {
+                        processSteps.push(this.setStepItem(item,steps["bpmn:sequenceFlow"],index))
+                    })
+                } else {
+                    processSteps.push(this.setStepItem(steps["bpmn:task"], steps["bpmn:sequenceFlow"]))
+                }
+            }
             this.setSteps(processSteps)
+        },
+        setStepItem(item, sequenceFlow, index = 1) {
+            return {
+                id: item._attributes.id,
+                name: item._attributes.name,
+                description: this.getStepDescription(item._attributes.id),
+                parentSteps: sequenceFlow? this.getParentSteps(item._attributes.id, sequenceFlow): [],
+                component: this.getStepComponent(item._attributes.id, index),
+                childrenSteps: sequenceFlow? this.getChildrenSteps(item._attributes.id, sequenceFlow): [],
+            }
         },
         getStepComponent(id, index) {
             const defaultComponent = {
@@ -143,32 +150,42 @@ export default {
         },
         getParentSteps(id, sequenceFlow) {
             let result = []
-            sequenceFlow.map(item => {
-                if (item._attributes.targetRef === id) {
-                    result.push({
-                        id: item._attributes.sourceRef
-                    })
-                }
-            })
+            if (Array.isArray(sequenceFlow)) {
+                sequenceFlow.map(item => {
+                    if (item._attributes.targetRef === id) {
+                        result.push({id: item._attributes.sourceRef})
+                    }
+                })
+            } else {
+                if (sequenceFlow._attributes.targetRef === id)
+                    result.push({id: sequenceFlow._attributes.sourceRef})
+            }
+            
             return result
         },
         getChildrenSteps(id, sequenceFlow) {
             let result = []
-            let count = sequenceFlow.filter(item => item._attributes.sourceRef === id)
-            sequenceFlow.map(item => {
-                if (item._attributes.sourceRef === id) {
-                    result.push({
-                        id: item._attributes.targetRef,
-                        ...(count.length > 1? {
-                            conditions: item._attributes.name
-                        }:{})
-                    })
-                }
-            })
+            if (Array.isArray(sequenceFlow))  {
+                let count = sequenceFlow.filter(item => item._attributes.sourceRef === id)
+                sequenceFlow.map(item => {
+                    if (item._attributes.sourceRef === id) {
+                        result.push({
+                            id: item._attributes.targetRef,
+                            ...(count.length > 1? {
+                                conditions: item._attributes.name
+                            }:{})
+                        })
+                    }
+                })
+            } else {
+                if (sequenceFlow._attributes.sourceRef === id)
+                    result.push({id: sequenceFlow._attributes.targetRef})
+            }
+            
             return result
         },
         showFamilyId(steps) {
-            if (steps.length) {
+            if (steps && steps.length) {
                 let ids = []
                 steps.map(item => ids.push(item.id))
                 return ids.join(",")
@@ -176,7 +193,7 @@ export default {
             return
         },
         showExistenceConditions(childrenSteps) {
-            if (childrenSteps.length> 1) {
+            if (childrenSteps && childrenSteps.length> 1) {
                 let existenceConditions = []
                 childrenSteps.map(item => existenceConditions.push(item.conditions))
                 return existenceConditions.join(" || ")

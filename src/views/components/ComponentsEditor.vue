@@ -74,20 +74,21 @@ export default {
             this.componentDialogEdit = true
         },
         updateComponent(updatedComponent) {
-            const stepIndex = this.steps.findIndex(item => item.id === updatedComponent.stepId)
+            if (this.steps) {
+                const stepIndex = this.steps.findIndex(item => item.id === updatedComponent.stepId)
 
-            this.updateStepComponent({
-                index: stepIndex,
-                component: {
-                    description: updatedComponent.description,
-                    name: updatedComponent.name,
-                    type: updatedComponent.type,
-                    alias: updatedComponent.alias,
-                    relatedStep: updatedComponent.relatedStep
-                }
-            })
-
-            this.componentDialogEdit = false
+                this.updateStepComponent({
+                    index: stepIndex,
+                    component: {
+                        description: updatedComponent.description,
+                        name: updatedComponent.name,
+                        type: updatedComponent.type,
+                        alias: updatedComponent.alias,
+                        relatedStep: updatedComponent.relatedStep
+                    }
+                })
+                this.componentDialogEdit = false
+            }
         }
     }
 }
