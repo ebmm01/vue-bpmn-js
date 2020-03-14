@@ -12,9 +12,15 @@
                 :items="steps"
                 :items-per-page="-1">
                 <template v-slot:item.parentSteps="{item}">
-                    {{showParentStepsId(item.parentSteps)}}
+                    {{showFamilyId(item.parentSteps)}}
                 </template>
-                <!-- <template v-slot:item.acoes="{ item }">
+                <template v-slot:item.existenceConditions="{item}">
+                    {{showExistenceConditions(item.childrenSteps)}}
+                </template>
+                <template v-slot:item.childrenSteps="{item}">
+                    {{showFamilyId(item.childrenSteps)}}
+                </template>
+                <template v-slot:item.acoes="{ item }">
                    <div class="step-item-actions">
                         <v-tooltip 
                             transition="fade-transition"
@@ -34,14 +40,14 @@
                             <span>Editar step</span>
                         </v-tooltip>
                     </div>
-                </template> -->
+                </template>
             </v-data-table>
         </div>
-        <!-- <step-dialog-edit 
+        <step-dialog-edit 
             @closeStepDialog="stepDialogEdit = false"
             @saveStepDialog="updateStepDescription"
             :step="stepDialogItem"
-            :show="stepDialogEdit" /> -->
+            :show="stepDialogEdit" />
     </v-card>
 </template>
 
@@ -50,15 +56,21 @@ import { mapActions, mapState } from 'vuex'
 import convert from 'xml-js';
 
 export default {
+    components: {
+        "step-dialog-edit": ()=> import("../steps/StepDialogEdit")
+    },
     data() {
         return {
+            stepDialogItem: undefined,
+            stepDialogEdit: false,
             headers: [
+                { text: 'Id', value: 'id' },
                 { text: 'Nome', value: 'name' },
                 { text: 'Descrição', value: 'description' },
                 { text: 'Componente', value: 'component.name' },
-                { text: 'Condição de existência:', value: 'childrenSteps.conditions'},
+                { text: 'Condição de existência:', value: 'existenceConditions'},
                 { text: 'ParentSteps', value: 'parentSteps' },
-                { text: 'ChildrenSteps', value: 'childrenSteps.id' },
+                { text: 'ChildrenSteps', value: 'childrenSteps' },
                 { text: 'Ações', value: 'acoes' },
             ],
         }
@@ -155,16 +167,34 @@ export default {
             })
             return result
         },
-        showParentStepsId(parentSteps) {
-            if (parentSteps[0]) {
-                return parentSteps[0].id
+        showFamilyId(steps) {
+            if (steps.length) {
+                let ids = []
+                steps.map(item => ids.push(item.id))
+                return ids.join(",")
             } 
             return
-        }
+        },
+        showExistenceConditions(childrenSteps) {
+            if (childrenSteps.length> 1) {
+                let existenceConditions = []
+                childrenSteps.map(item => existenceConditions.push(item.conditions))
+                return existenceConditions.join(" || ")
+            } 
+            return
+        },
+        openStepDialogEdit(item) {
+            this.stepDialogItem = item
+            this.stepDialogEdit = true
+        },
+        updateStepDescription({description, id}) {
+            const stepIndex = this.steps.findIndex(item => item.id === id);
+            this.steps[stepIndex].description = description;
+            this.stepDialogEdit = false
+        },
     },
     watch: {
-        updateData: function(val) {
-            console.log(val)
+        updateData: function() {
             if (this.updateData) {
                 this.getSteps()
             }

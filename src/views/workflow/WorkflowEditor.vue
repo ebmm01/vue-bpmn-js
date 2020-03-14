@@ -17,7 +17,7 @@ export default {
         }
     },
     data: () => ({
-        processSteps: []
+        
     }),
     computed: {
         ...mapState([
@@ -38,7 +38,7 @@ export default {
                 exportJSON.modeler = convert.xml2json(xml, {compact: true, trim: true});
             });
 
-            exportJSON.steps = this.processSteps;
+            exportJSON.steps = this.steps;
             exportJSON.name = this.workflowName || "Workflow";
             exportJSON.description = this.workflowDescription || "Workflow";
 

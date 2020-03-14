@@ -42,7 +42,7 @@
 
                 <v-tab-item
                     eager>
-                    <!-- <components /> -->
+                    <components />
 
                 </v-tab-item>
                 
@@ -132,7 +132,8 @@ export default {
     components: {
         "page-title":PageTitle,
         "workflow-editor": () => import('../workflow/WorkflowEditor'),
-        "steps": () => import("../steps/StepsEditor")
+        "steps": () => import("../steps/StepsEditor"),
+        "components": () => import("../components/ComponentsEditor")
     },
     data() {
         return {
