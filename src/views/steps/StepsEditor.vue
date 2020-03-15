@@ -208,13 +208,6 @@ export default {
             this.steps[stepIndex].description = description;
             this.stepDialogEdit = false
         },
-    },
-    watch: {
-        updateData: function() {
-            if (this.updateData) {
-                this.getSteps()
-            }
-        }
     }
 }
 </script>

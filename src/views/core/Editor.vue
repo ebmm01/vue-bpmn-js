@@ -3,22 +3,68 @@
         id="sample" 
         class="workflow-section"
         style="heigth:100%">
+
+        <v-overlay
+            absolute 
+            :value="changingWorkflow">
+            <v-progress-circular
+                indeterminate
+                color="primary" />
+        </v-overlay>
+
         <div
             class="workflow-list">
              <page-title 
                 :showBack="false"
-                title="Workflow list"
-                description="ss ">                
+                title="Lista de workflows"
+                description=""> 
+                <template v-slot:left>
+                    <v-tooltip 
+                        transition="fade-transition"
+                        bottom
+                        color="secondary">
+                        <template v-slot:activator="{ on }">
+                            <v-btn  
+                                href="#"
+                                small
+                                text
+                                class="pa-0 mr-auto"
+                                v-on="on"
+                                @click="$router.push({path: '/'})">
+                                <v-icon color="white">mdi-chevron-left</v-icon>
+                            </v-btn>
+                        </template>
+                        <span>Retornar</span>
+                    </v-tooltip>
+                </template>
+
+                <v-tooltip 
+                    transition="fade-transition"
+                    bottom
+                    color="secondary">
+                    <template v-slot:activator="{ on }">
+                        <v-btn  
+                            href="#"
+                            small
+                            text
+                            class="pa-0"
+                            @click="openWorkflowDialog(true)"
+                            v-on="on">
+                            <v-icon color="white">mdi-plus</v-icon>
+                        </v-btn>
+                    </template>
+                    <span>Criar novo workflow</span>
+                </v-tooltip>
              </page-title>
             
             <ul 
                 style="list-style:none;"
                 class="pl-0">
                 <li
-                    class="d-flex flex-column elevation-2 ma-2 pa-2"
-                    style="border-radius:5px;"
                     v-for="wf in workflowList"
-                    :key="wf.id">
+                    :key="wf._id"
+                    class="wf-list-item d-flex flex-column elevation-2 ma-2 pa-2"
+                    :class="{'active': wf._id === workflowId}">
                     <div>
                         <p style="font-size:12px" class="mb-0"><b>Nome:</b>  {{wf.name}}</p>
                         <p style="font-size:12px" class="mb-0"><b>Id:</b>  {{wf._id}}</p>
@@ -31,16 +77,16 @@
                             color="secondary">
                             <template v-slot:activator="{ on }">
                                 <v-btn
-                                    @click="selecWorkflow(wf._id)"
+                                    @click=" selecWorkflow(wf._id)"
                                     class="mx-2"
                                     color="primary"
                                     v-on="on"
                                     icon
                                     depressed>
-                                    <v-icon>mdi-check-bold</v-icon>
+                                    <v-icon>{{ wf._id !== workflowId? 'mdi-check-bold' : 'mdi-restore'}}</v-icon>
                                 </v-btn>
                             </template>
-                            <span>Selecionar workflow</span>
+                            <span>{{ wf._id !== workflowId? "Selecionar workflow": "Reverter alterções"}}</span>
                         </v-tooltip>
                         
                         <v-tooltip 
@@ -78,6 +124,89 @@
                             href="#"
                             icon
                             v-on="on"
+                            @click="openWorkflowDialog(false)"
+                            id="editWorkflow">
+                            <v-icon color="white">mdi-pencil</v-icon>
+                        </v-btn>
+                    </template>
+                    <span>Editar workflow</span>
+                </v-tooltip>
+                <v-dialog
+                    v-model="imageDialog">
+                    <template v-slot:activator="{ on }">
+                        <v-tooltip 
+                            v-on="on"
+                            transition="fade-transition"
+                            bottom
+                            color="secondary">
+                            <template v-slot:activator="{ on }">
+                                <v-btn 
+                                    href="#"
+                                    icon
+                                    v-on="on"
+                                    @click="generateImage" 
+                                    id="imgWorkflow">
+                                    <v-icon color="white">mdi-image-plus</v-icon>
+                                </v-btn>
+                            </template>
+                            <span> Gerar imagem</span>
+                        </v-tooltip>
+                    </template>
+
+                    <v-card>
+                        <v-card-title
+                            class="headline primary white--text">
+                            Imagem - {{workflowName}}
+                        </v-card-title>
+                        <div
+                            style="position:relative;">
+                            <v-overlay
+                                absolute 
+                                :value="overlay">
+                                <v-progress-circular
+                                    indeterminate
+                                    color="primary" />
+                            </v-overlay>
+                            <canvas id="canvasImg"></canvas>
+                        </div>
+
+                        <v-divider></v-divider>
+
+                        <v-card-actions>    
+                            <v-btn
+                                color="primary"
+                                text
+                                @click="imageDialog = false">
+                                Sair
+                            </v-btn>
+                            <v-spacer></v-spacer>
+                            <v-btn
+                                href="#"
+                                color="primary"
+                                id="downloadSvg"
+                                depressed="">
+                                Baixar como SVG
+                            </v-btn>
+                            <v-btn
+                                href="#"
+                                color="primary"
+                                depressed=""
+                                id="downloadPng">
+                                Baixar como PNG
+                            </v-btn>
+                        </v-card-actions>
+                    </v-card>
+                </v-dialog>
+
+                <v-tooltip 
+                    transition="fade-transition"
+                    bottom
+                    color="secondary">
+                    <template v-slot:activator="{ on }">
+                        <v-btn 
+                            href="#"
+                            icon
+                            v-on="on"
                             @click="downloadWorkflow" 
                             id="downloadWorkflow">
                             <v-icon color="white">mdi-download</v-icon>
@@ -85,6 +214,7 @@
                     </template>
                     <span> Baixar workflow</span>
                 </v-tooltip>
+
                 <v-tooltip 
                     transition="fade-transition"
                     bottom
@@ -99,11 +229,12 @@
                             <v-icon color="white">{{workflowId? "mdi-content-save-edit": "mdi-content-save"}}</v-icon>
                         </v-btn>
                     </template>
-                    <span>{{workflowId? "Atualizar workflow": "Salvar workflow"}}</span>
+                    <span>{{workflowId? "Salvar alterações": "Salvar workflow"}}</span>
                 </v-tooltip>
             </page-title>
 
             <v-tabs 
+                hide-slider 
                 icons-and-text
                 @change="updateTabs">
                 <v-tab>
@@ -133,8 +264,7 @@
                     transition="none"
                     eager>
                     <steps 
-                        ref='stepsEditor'
-                        :updateData="stepsDetails"/>
+                        ref='stepsEditor'/>
 
                 </v-tab-item>
 
@@ -148,6 +278,13 @@
                 
             </v-tabs>
         </div>
+        <workflow-dialog-edit 
+            ref="workflowEditDialog"
+            @newWorklow="newWorkflow"
+            @closeWorkflowDialogEdit=" workflowDialogEdit = false"
+            :show="workflowDialogEdit" />
+        
+
     </section>
 </template>
 
@@ -161,12 +298,18 @@ export default {
         "page-title":PageTitle,
         "workflow-editor": () => import('../workflow/WorkflowEditor'),
         "steps": () => import("../steps/StepsEditor"),
+        "workflow-dialog-edit": () => import("../workflow/WorkflowDialogEdit"),
         "components": () => import("../components/ComponentsEditor")
     },
     data() {
         return {
             stepsDetails: 0,
-            workflowList: []
+            workflowList: [],
+            overlay: false,
+            imageDialog: false,
+            imgSrc: undefined,
+            workflowDialogEdit: false,
+            changingWorkflow: false,
         }
     },
     computed: {
@@ -190,13 +333,46 @@ export default {
             this.$refs.wfEditor.generateJSON();
         },
         updateTabs(tab) {
-            this.stepsDetails = tab
+            if (tab) {
+                this.$refs.stepsEditor.getSteps()
+            }
         },
-        selecWorkflow(id) {
-            return
+        openWorkflowDialog(newWf) {
+            this.workflowDialogEdit = true
+            this.$refs.workflowEditDialog.setDefaultValues({
+                name: newWf? "": this.workflowName,
+                wfDescription: newWf? "" : this.workflowDescription
+            }, newWf)
         },
-        deleteWorkflow(id) {
-            return
+        newWorkflow(payload) {
+            this.changingWorkflow = true
+            setTimeout(() => {
+                this.changeWorkflowName(payload.name)
+                this.changeWorkflowDescription(payload.description)
+                this.setWorkflowId("")
+                this.setWorkflowData(undefined);
+                this.setSteps([]);
+                this.$refs.wfEditor.loadDiagram()
+                this.$refs.stepsEditor.getSteps()
+                this.changingWorkflow = false
+            }, 600)
+        },
+        async selecWorkflow(id) {
+            this.changingWorkflow = true
+            await this.updateWorkflowData(id);
+            this.changingWorkflow = false
+        },
+        async deleteWorkflow(id) {
+            let response = undefined
+            let wfId = id? id : this.workflowId
+            try {
+                response = await axios.delete(`/wfModel/${wfId}`);
+
+                await this.getWfModelsAPI()
+
+            } catch {
+                return
+            }
         },
         toLocaleDate(date) {
             return new Date(date).toLocaleString()
@@ -273,22 +449,72 @@ export default {
             } catch(error) {
                 response = false
             }
+        },
+        generateImage() {
+            this.overlay = true
+            this.imageDialog = true
+            setTimeout(() => {
+                // Gerando imagem
+                const canvg = require('canvg-browser'),
+                    canvas = document.getElementById('canvasImg');
+
+                const svg = document.querySelector('.djs-container > svg').outerHTML;
+
+                const options = {
+                    log: false,
+                    ignoreDimensions: false,
+                    ignoreMouse: true
+                };
+
+                canvg(canvas, svg, options);
+
+                const img = canvas.toDataURL("image/png");
+                
+                const svgBlob = new Blob([svg], {type:"image/svg+xml;charset=utf-8"});
+                const svgUrl = URL.createObjectURL(svgBlob);
+
+                const downloadSVGLink = document.getElementById("downloadSvg");
+                downloadSVGLink.href = svgUrl;
+                downloadSVGLink.download = `${this.workflowName}.svg`
+                
+                const downloadPNGLink = document.getElementById("downloadPng");
+                downloadPNGLink.href = img;
+                downloadPNGLink.download = `${this.workflowName}.png`
+
+                this.overlay = false
+            }, 500)
+        },
+        closeImgDialog() {
+            this.imageDialog = false
+            const downloadSVGLink = document.getElementById("downloadSvg");
+            downloadSVGLink.href = "#";
+            downloadSVGLink.download = ""
+            
+            const downloadPNGLink = document.getElementById("downloadPng");
+            downloadPNGLink.href = "#";
+            downloadPNGLink.download = ""   
+
+            const canvas = document.getElementById("canvasImg");
+
+            const context = canvas.getContext('2d');
+            context.clearRect(0, 0, canvas.width, canvas.height);
         }
     },
     async created() {
+        this.changingWorkflow = true
         await this.getWfModelsAPI()
         if (this.workflowId) {
             await this.updateWorkflowData()
         }
+        this.changingWorkflow = false
     }
 }
 </script>
 
 <style lang="scss">
-#wfImage {
-    object-fit: contain;
+#canvasImg {
     width: 100%;
-    max-height: 650px;
+    height: 650px;
 }
 
 #SVGArea {
@@ -315,11 +541,44 @@ export default {
         margin-left: 10px;
         display: flex;
         flex-direction: column;
+        border-left: 1px solid #1976d2;
+
+        .v-tabs-bar__content {
+            background: rgba(0,0,0, 0.1);
+            border-bottom: 1px solid #1976d2;
+
+            
+
+            .v-tab {
+                margin-bottom: -1px;
+                border-bottom: 1px solid #1976d2;
+
+                &.v-tab--active {
+                    background: white;
+                    border-radius: 5px 5px 0 0;
+                    border-bottom: 1px solid transparent;
+                    box-shadow: 0px 0px 5px darkgrey;
+                }
+            }
+        }
     }
 
     .workflow-list {
         width: 400px;
         box-shadow: 1px 1px 4px 1px darkgrey;
+
+        .wf-list-item {
+            border-radius:  5px;
+            border: 2px solid transparent;
+
+            &.active {
+                border: 2px solid #1976d2
+            }
+        }
+
+        .v-toolbar__content {
+            padding: 0 !important;
+        }
     }
 }
 </style>

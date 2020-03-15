@@ -81,7 +81,6 @@ export default {
                 "Worker",
                 "Robô RPA",
             ],
-
             localStep: {}
         }
     },

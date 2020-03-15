@@ -53,6 +53,7 @@ export default {
             let downloadWorkflowBtn = document.getElementById('downloadWorkflow');
             downloadWorkflowBtn.href = 'data:'+ data
             downloadWorkflowBtn.download = `${model.name.toLowerCase()}.json`
+            setTimeout(() => downloadWorkflowBtn.href = "#", 300)
         },
         loadDiagram() {
             let loadDiagram = undefined

@@ -8,14 +8,8 @@
             <v-toolbar-title 
                 style="width: 100%;"
                 class="d-flex align-center">
-                <v-btn
-                    v-if="showBack"
-                    color="primary"
-                    icon
-                    @click="$router.push({path: '/'})">
-                    <v-icon large color="white">mdi-chevron-left</v-icon>
-                </v-btn>
-                <div class="d-flex ml-3">
+                <slot name="left"/>
+                <div class="d-flex">
                     <h3 class="text-left white--text">
                         {{title}}  {{showBack? "-": ""}} <span class="font-weight-light">{{description}}</span>
                     </h3>
