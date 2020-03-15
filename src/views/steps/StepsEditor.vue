@@ -44,9 +44,9 @@
             </v-data-table>
         </div>
         <step-dialog-edit 
+            ref="stepDialogEditDialog"
             @closeStepDialog="stepDialogEdit = false"
             @saveStepDialog="updateStepDescription"
-            :step="stepDialogItem"
             :show="stepDialogEdit" />
     </v-card>
 </template>
@@ -61,7 +61,6 @@ export default {
     },
     data() {
         return {
-            stepDialogItem: undefined,
             stepDialogEdit: false,
             headers: [
                 { text: 'Id', value: 'id' },
@@ -201,7 +200,7 @@ export default {
             return
         },
         openStepDialogEdit(item) {
-            this.stepDialogItem = item
+            this.$refs.stepDialogEditDialog.loadDefaultValues(item)
             this.stepDialogEdit = true
         },
         updateStepDescription({description, id}) {

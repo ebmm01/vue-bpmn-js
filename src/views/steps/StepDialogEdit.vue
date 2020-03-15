@@ -1,6 +1,6 @@
 <template>
     <v-dialog
-        v-model="dialog"
+        v-model="show"
         persistent=""
         width="500">
         <v-card>
@@ -45,9 +45,6 @@
 <script>
 export default {
     props: {
-        step: {
-            required: true
-        },
         show: {
             default: false
         }
@@ -55,34 +52,23 @@ export default {
     data() {
         return {
             dialog: false,
-            description: undefined,
-            name: undefined,
+            description: "",
+            id: undefined,
+            name: "",
             localStep: {}
         }
     },
     methods: {
         closeDialog() {
-            this.dialog = false
             this.$emit('closeStepDialog')
         },
         saveStep() {
-            this.$emit('saveStepDialog', {description: this.description, id: this.step.id})
+            this.$emit('saveStepDialog', {description: this.description, id: this.id})
         },
-    },
-    watch: {
-        show: function() {
-            if (this.show) {
-                if (this.step) {
-                    this.name = this.step.name || "{ Step ainda não nomeado }"
-                    this.description = this.step.description === "--" ? "" : this.step.description
-                } else {
-                    this.description  = ""
-                    this.name = ""
-                }
-                this.dialog = true
-            } else {
-                this.dialog = false
-            }
+        loadDefaultValues(item) {
+            this.id = item.id
+            this.name = item.name || "{ Step ainda não nomeado }"
+            this.description = item.description === "--" ? "" : item.description
         }
     }
 }

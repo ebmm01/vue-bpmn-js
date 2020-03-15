@@ -2,6 +2,7 @@
     <div class="page-title d-flex align-center">
         <v-toolbar 
             flat 
+            dense=""
             class="px-0"
             color="primary">
             <v-toolbar-title 
@@ -15,9 +16,12 @@
                     <v-icon large color="white">mdi-chevron-left</v-icon>
                 </v-btn>
                 <div class="d-flex ml-3">
-                    <h2 class="text-left white--text">
+                    <h3 class="text-left white--text">
                         {{title}}  {{showBack? "-": ""}} <span class="font-weight-light">{{description}}</span>
-                    </h2>
+                    </h3>
+                </div>
+                <div class="ml-auto">
+                    <slot/>
                 </div>
             </v-toolbar-title>
         </v-toolbar>

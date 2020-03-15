@@ -5,6 +5,7 @@
                 <router-view></router-view>
             </v-slide-x-transition>
         </v-content>
+        <notifications group="foo" position="top center"/>
     </v-app>
 </template>
 
@@ -31,8 +32,6 @@ export default {
 
 .djs-palette {
     top: 50px !important;
-    right: 20px !important;
-    left: unset !important;
 
     &.two-column {
         width: 48px !important;

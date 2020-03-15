@@ -8,8 +8,9 @@
              <page-title 
                 :showBack="false"
                 title="Workflow list"
-                description="ss "/>
-            <!--
+                description="ss ">                
+             </page-title>
+            
             <ul 
                 style="list-style:none;"
                 class="pl-0">
@@ -61,64 +62,91 @@
                         </v-tooltip>
                     </div>
                 </li>
-            </ul> -->
+            </ul>
         </div>
         
         <div class="workflow-details">
             <page-title 
                 :title="workflowName"
-                :description="workflowDescription"/>
+                :description="workflowDescription">
+                <v-tooltip 
+                    transition="fade-transition"
+                    bottom
+                    color="secondary">
+                    <template v-slot:activator="{ on }">
+                        <v-btn 
+                            href="#"
+                            icon
+                            v-on="on"
+                            @click="downloadWorkflow" 
+                            id="downloadWorkflow">
+                            <v-icon color="white">mdi-download</v-icon>
+                        </v-btn>
+                    </template>
+                    <span> Baixar workflow</span>
+                </v-tooltip>
+                <v-tooltip 
+                    transition="fade-transition"
+                    bottom
+                    color="secondary">
+                    <template v-slot:activator="{ on }">
+                        <v-btn 
+                            href="#"
+                            icon
+                            v-on="on"
+                            @click="handleWfModelState" 
+                            id="saveUpdateWorkflow">
+                            <v-icon color="white">{{workflowId? "mdi-content-save-edit": "mdi-content-save"}}</v-icon>
+                        </v-btn>
+                    </template>
+                    <span>{{workflowId? "Atualizar workflow": "Salvar workflow"}}</span>
+                </v-tooltip>
+            </page-title>
 
             <v-tabs 
+                icons-and-text
                 @change="updateTabs">
                 <v-tab>
-                    <v-icon left>mdi-graph</v-icon>
                     Workflow
+                    <v-icon left>mdi-google-circles-extended</v-icon>
                 </v-tab>
                 <v-tab>
-                    <v-icon left>mdi-cards-variant</v-icon>
                     Steps
+                    <v-icon left>mdi-sitemap</v-icon>
                 </v-tab>
 
                 <v-tab>
-                    <v-icon left>mdi-toy-brick-outline</v-icon>
                     Components
+                    <v-icon left>mdi-cogs</v-icon>
                 </v-tab>
                 
                 <v-tab-item
+                    reverse-transition="none"
+                    transition="none"
                     eager>
                     <workflow-editor
-                        :downloadWorkflow="generateJSON"
-                        :forceUpdate="forceWorkflowUpdate"/>
+                        ref='wfEditor'/>
 
                 </v-tab-item>
                 <v-tab-item
+                    reverse-transition="none"
+                    transition="none"
                     eager>
                     <steps 
+                        ref='stepsEditor'
                         :updateData="stepsDetails"/>
 
                 </v-tab-item>
 
                 <v-tab-item
+                    reverse-transition="none"
+                    transition="none"
                     eager>
                     <components />
 
                 </v-tab-item>
                 
             </v-tabs>
-
-            <v-card class="py-4 px-2 d-flex">
-                
-                <v-btn 
-                    href="#"
-                    depressed
-                    color="primary"
-                    class="mx-2"
-                    @click="downloadWorkflow" 
-                    id="downloadWorkflow">
-                    Baixar JSON
-                </v-btn>
-            </v-card>
         </div>
     </section>
 </template>
@@ -126,6 +154,7 @@
 <script>
 import PageTitle from '@/components/PageTitle'
 import { mapState, mapActions} from 'vuex'
+import axios from "../../plugins/axios"
 
 export default {
     components: {
@@ -136,8 +165,8 @@ export default {
     },
     data() {
         return {
-            generateJSON: false,
-            stepsDetails: 0
+            stepsDetails: 0,
+            workflowList: []
         }
     },
     computed: {
@@ -145,30 +174,117 @@ export default {
             'workflowName',
             'workflowData',
             'workflowDescription',
-            'steps'
+            'steps',
+            'workflowId'
         ])
     },
     methods: {
+        ...mapActions([
+            'changeWorkflowName', 
+            'changeWorkflowDescription',
+            'setWorkflowData',
+            'setWorkflowId',
+            'setSteps'
+        ]),
         downloadWorkflow() {
-            this.generateJSON = true
-            setTimeout(() => this.generateJSON = false, 200)
-            
+            this.$refs.wfEditor.generateJSON();
         },
         updateTabs(tab) {
             this.stepsDetails = tab
         },
-        forceWorkflowUpdate() {
+        selecWorkflow(id) {
             return
+        },
+        deleteWorkflow(id) {
+            return
+        },
+        toLocaleDate(date) {
+            return new Date(date).toLocaleString()
+        },
+        async handleWfModelState() {
+            let response = undefined
+            const wfModel = this.$refs.wfEditor.getModelData();
+            let wfId = this.workflowId
+            // Update
+            if (this.workflowId) {
+                try {
+                    response = await axios.put(`/wfModel/${wfId}`, wfModel)
+
+                    this.$notify({
+                        group: 'foo',
+                        type: 'success',
+                        title: 'Workflow atualizado com sucesso'
+                    });
+                } catch(error) {
+                    this.$notify({
+                        group: 'foo',
+                        type: 'error',
+                        title: 'Ocorreu um erro ao atualizar o workflow',
+                        text: error
+                    });
+                }
+            } 
+            // create
+            else {
+                try {
+                    response = await axios.post(`/wfModel`, wfModel)
+                    this.setWorkflowId(response.data._id)
+                    
+                    this.$notify({
+                        group: 'foo',
+                        type: 'success',
+                        title: 'Workflow criado com sucesso',
+                        text: `Id: ${response._id}`
+                    });
+                } catch(error) {
+                    this.$notify({
+                        group: 'foo',
+                        type: 'error',
+                        title: 'Ocorreu um erro ao atualizar o workflow',
+                        text: error
+                    });
+                }
+            }
+
+            await this.getWfModelsAPI()
+        },
+        async updateWorkflowData(id) {
+            let response = undefined
+            let wfId = id? id : this.workflowId
+            try {
+                response = await axios.get(`/wfModel/${wfId}`);
+                this.changeWorkflowName(response.data.name)
+                this.changeWorkflowDescription(response.data.description)
+                this.setWorkflowData(response.data.modeler);
+                this.setSteps(response.data.steps)
+                this.setWorkflowId(response.data._id)
+                this.$refs.wfEditor.loadDiagram()
+
+            } catch {
+                return
+            }
+        },
+        async getWfModelsAPI() {
+            let response = undefined
+
+            try {
+                response = await axios.get('wfmodels')
+                this.workflowList = response.data;
+            } catch(error) {
+                response = false
+            }
+        }
+    },
+    async created() {
+        await this.getWfModelsAPI()
+        if (this.workflowId) {
+            await this.updateWorkflowData()
         }
     }
 }
 </script>
 
 <style lang="scss">
-.v-tab {
-    justify-content: flex-start !important;
-}
-
 #wfImage {
     object-fit: contain;
     width: 100%;
@@ -202,7 +318,7 @@ export default {
     }
 
     .workflow-list {
-        width: 350px;
+        width: 400px;
         box-shadow: 1px 1px 4px 1px darkgrey;
     }
 }

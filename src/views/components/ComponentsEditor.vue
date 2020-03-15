@@ -33,9 +33,9 @@
             </v-data-table>
         </div>
         <component-dialog-edit 
+            ref="componentEditDialog"
             @closeComponentDialog="componentDialogEdit = false"
             @saveComponentDialog="updateComponent"
-            :component="componentDialogItem"
             :show="componentDialogEdit" />
     </v-card>
 </template>
@@ -69,26 +69,25 @@ export default {
     methods: {
         ...mapActions(['updateStepComponent']),
         openComponentDialogEdit(component, id) {
-            this.componentDialogItem = component
-            this.componentDialogItem.id = id
+            component.id = id
+            this.$refs.componentEditDialog.loadDefaultValues(component)
             this.componentDialogEdit = true
         },
         updateComponent(updatedComponent) {
-            if (this.steps) {
-                const stepIndex = this.steps.findIndex(item => item.id === updatedComponent.stepId)
+            const stepIndex = this.steps.findIndex(item => item.id === updatedComponent.stepId)
 
-                this.updateStepComponent({
-                    index: stepIndex,
-                    component: {
-                        description: updatedComponent.description,
-                        name: updatedComponent.name,
-                        type: updatedComponent.type,
-                        alias: updatedComponent.alias,
-                        relatedStep: updatedComponent.relatedStep
-                    }
-                })
-                this.componentDialogEdit = false
-            }
+            this.updateStepComponent({
+                index: stepIndex,
+                component: {
+                    description: updatedComponent.description,
+                    name: updatedComponent.name,
+                    type: updatedComponent.type,
+                    alias: updatedComponent.alias,
+                    relatedStep: updatedComponent.relatedStep
+                }
+            })
+
+            this.componentDialogEdit = false
         }
     }
 }

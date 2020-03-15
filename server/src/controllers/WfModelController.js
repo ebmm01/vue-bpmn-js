@@ -4,7 +4,7 @@ const WfModel = mongoose.model('WfModel');
 
 module.exports = {
     async index(req, res) {
-        const wfModels = await WfModel.find({}, {name:1, lastUpdatedAt:1});
+        const wfModels = await WfModel.find({}, {name:1, lastUpdatedAt:1}).sort( { lastUpdatedAt: -1 } );
 
         return res.json(wfModels);
     },

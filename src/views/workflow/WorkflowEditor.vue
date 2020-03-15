@@ -14,6 +14,9 @@ export default {
     props: {
         downloadWorkflow: {
             default: false
+        },
+        forceUpdate: {
+            default: false
         }
     },
     data: () => ({
@@ -68,14 +71,6 @@ export default {
                     console.log('error rendering', err);
                 } 
             });
-        }
-    },
-    watch: {
-        downloadWorkflow: function() {
-            if (this.downloadWorkflow) {
-                console.log('valor alterado')
-                this.generateJSON()
-            }
         }
     },
     mounted() {

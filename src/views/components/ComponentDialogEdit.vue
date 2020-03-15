@@ -1,6 +1,6 @@
 <template>
     <v-dialog
-        v-model="dialog"
+        v-model="show"
         persistent
         width="500">
         <v-card>
@@ -64,9 +64,6 @@
 <script>
 export default {
     props: {
-        component: {
-            required: true
-        },
         show: {
             default: false
         }
@@ -103,25 +100,12 @@ export default {
                 stepId: this.component.id
             })
         },
-    },
-    watch: {
-        show: function() {
-            if (this.show) {
-                if (this.component) {
-                    this.name = this.component.name
-                    this.alias = this.component.alias
-                    this.type = this.component.type
-                    this.description = this.component.description
-                } else {
-                    this.name = ""
-                    this.alias = ""
-                    this.type = ""
-                    this.description = ""
-                }
-                this.dialog = true
-            } else {
-                this.dialog = false
-            }
+        loadDefaultValues(component) {
+            this.component = component
+            this.name = this.component.name
+            this.alias = this.component.alias
+            this.type = this.component.type
+            this.description = this.component.description
         }
     }
 }
