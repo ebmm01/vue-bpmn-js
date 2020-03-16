@@ -545,19 +545,19 @@ export default {
 
         .v-tabs-bar__content {
             background: rgba(0,0,0, 0.1);
-            border-bottom: 1px solid #1976d2;
-
-            
+            box-shadow: inset 0px 0px 5px darkgrey;
 
             .v-tab {
                 margin-bottom: -1px;
                 border-bottom: 1px solid #1976d2;
+                transition: 0s;
 
                 &.v-tab--active {
                     background: white;
                     border-radius: 5px 5px 0 0;
                     border-bottom: 1px solid transparent;
                     box-shadow: 0px 0px 5px darkgrey;
+                    transition: 0s;
                 }
             }
         }

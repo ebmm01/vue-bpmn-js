@@ -67,11 +67,7 @@ export default {
             importedModel = importedModel.replace('<default>',"")
             importedModel = importedModel.replace('</default>',"")
             
-            this.modeler.importXML(importedModel  , function(err) {
-                if (err) {
-                    console.log('error rendering', err);
-                } 
-            });
+            this.modeler.importXML(importedModel);
         }
     },
     mounted() {
