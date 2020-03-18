@@ -7,6 +7,8 @@
 
 <script>
 import Modeler from 'bpmn-js/lib/Modeler';
+import resizeTask from 'bpmn-js-task-resize/lib';
+
 import convert from 'xml-js';
 import { mapActions, mapState } from 'vuex'
 
@@ -71,7 +73,13 @@ export default {
         }
     },
     mounted() {
-        this.changeModeler(new Modeler({ container: '#canvas' }))
+        this.changeModeler(new Modeler({ 
+            container: '#canvas',
+            additionalModules: [
+                resizeTask
+            ],
+            taskResizingEnabled: true    
+        }))
         this.loadDiagram()
     }
 }
