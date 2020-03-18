@@ -2,13 +2,15 @@
     <v-card
         class="ma-4 pa-4 mr-0">
         <div id="canvas"></div>
+        <div class="properties-panel-parent"  id="properties"></div>
     </v-card>
 </template>
 
 <script>
 import Modeler from 'bpmn-js/lib/Modeler';
 import resizeTask from 'bpmn-js-task-resize/lib';
-
+import propertiesPanelModule  from 'bpmn-js-properties-panel'
+import propertiesProviderModule  from 'bpmn-js-properties-panel/lib/provider/bpmn'
 import convert from 'xml-js';
 import { mapActions, mapState } from 'vuex'
 
@@ -76,8 +78,13 @@ export default {
         this.changeModeler(new Modeler({ 
             container: '#canvas',
             additionalModules: [
-                resizeTask
+                resizeTask,
+                propertiesPanelModule,
+                propertiesProviderModule
             ],
+            propertiesPanel: {
+                parent: '#properties'
+            },
             taskResizingEnabled: true    
         }))
         this.loadDiagram()

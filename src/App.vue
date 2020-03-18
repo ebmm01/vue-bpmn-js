@@ -16,6 +16,8 @@ export default {
 </script>
 
 <style lang="scss">
+@import "./assets/styles/panel.css";
+
 #canvas {
     width: 100%;
     height: 100%;
