@@ -231,6 +231,23 @@
                     </template>
                     <span>{{workflowId? "Salvar alterações": "Salvar workflow"}}</span>
                 </v-tooltip>
+
+                <v-tooltip 
+                    transition="fade-transition"
+                    bottom
+                    color="secondary">
+                    <template v-slot:activator="{ on }">
+                        <v-btn 
+                            href="#"
+                            icon
+                            v-on="on"
+                            @click="dialogAbout = true" 
+                            id="aboutPoc">
+                            <v-icon color="white">mdi-information</v-icon>
+                        </v-btn>
+                    </template>
+                    <span> Sobre a poc</span>
+                </v-tooltip>
             </page-title>
 
             <v-tabs 
@@ -284,6 +301,42 @@
             @closeWorkflowDialogEdit=" workflowDialogEdit = false"
             :show="workflowDialogEdit" />
         
+        <v-dialog
+            v-model="dialogAbout"
+            width="500">
+
+            <v-card>
+                <v-card-title
+                class="headline primary white--text">
+                Sobre & todos
+                </v-card-title>
+
+                <v-card-text class="pt-5">
+                    A poc é um exemplo de como facilitar a criação de workflows, steps e componentes.
+                    <br/><br/>
+
+                    <b>TODO:</b>
+
+                    <br/><br/>
+                    - Cores nos steps;<br/>
+                    - Gerenciamento de descrição e cor no workflow<br/>
+                    - Geração de exemplos de avanço de processo<br/>
+                    - Melhoria na geração de imagens<br/>
+                </v-card-text>
+
+                <v-divider></v-divider>
+
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn
+                        color="primary"
+                        text
+                        @click="dialogAbout = false">
+                        Fechar
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
 
     </section>
 </template>
@@ -306,6 +359,7 @@ export default {
             stepsDetails: 0,
             workflowList: [],
             overlay: false,
+            dialogAbout: false,
             imageDialog: false,
             imgSrc: undefined,
             workflowDialogEdit: false,
