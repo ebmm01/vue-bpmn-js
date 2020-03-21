@@ -273,6 +273,7 @@
                     transition="none"
                     eager>
                     <workflow-editor
+                        @selectedElem="selSelectedElem"
                         ref='wfEditor'/>
 
                 </v-tab-item>
@@ -294,6 +295,27 @@
                 </v-tab-item>
                 
             </v-tabs>
+
+            <v-card
+                class="ma-3 pa-3 d-flex" 
+                v-if="tabs===0">
+                <v-text-field
+                    class="mr-3"
+                    v-model="stepIdColor"
+                    label="Id do step"
+                    placeholder="Insira o id so step"
+                ></v-text-field>  
+                <v-text-field
+                    label="Cor"
+                    v-model="stepColor"
+                    placeholder="insira a nova cor do step"
+                ></v-text-field>  
+                <v-btn
+                    @click="changeStepColor"
+                    color="primary">
+                    Alterar cor
+                </v-btn>
+            </v-card>
         </div>
         <workflow-dialog-edit 
             ref="workflowEditDialog"
@@ -308,7 +330,7 @@
             <v-card>
                 <v-card-title
                 class="headline primary white--text">
-                Sobre & todos
+                Sobre a poc
                 </v-card-title>
 
                 <v-card-text class="pt-5">
@@ -322,6 +344,7 @@
                     - Gerenciamento de descrição e cor no workflow<br/>
                     - Geração de exemplos de avanço de processo<br/>
                     - Melhoria na geração de imagens<br/>
+                    - Tradução
                 </v-card-text>
 
                 <v-divider></v-divider>
@@ -337,7 +360,6 @@
                 </v-card-actions>
             </v-card>
         </v-dialog>
-
     </section>
 </template>
 
@@ -356,6 +378,7 @@ export default {
     },
     data() {
         return {
+            tabs: 0,
             stepsDetails: 0,
             workflowList: [],
             overlay: false,
@@ -364,6 +387,9 @@ export default {
             imgSrc: undefined,
             workflowDialogEdit: false,
             changingWorkflow: false,
+            stepIdColor: undefined,
+            stepColor: undefined,
+            selectedElem: undefined
         }
     },
     computed: {
@@ -372,7 +398,8 @@ export default {
             'workflowData',
             'workflowDescription',
             'steps',
-            'workflowId'
+            'workflowId',
+            'modeler'
         ])
     },
     methods: {
@@ -386,7 +413,53 @@ export default {
         downloadWorkflow() {
             this.$refs.wfEditor.generateJSON();
         },
+        selSelectedElem(elem) {
+            this.stepIdColor = elem.id;
+            this.stepColor = elem.businessObject.di.fill;
+        },
+        getByIdStep(id) {
+            var elementRegistry = this.modeler.get('elementRegistry');
+            var elementList = elementRegistry.getAll();
+            var len = elementList.length;
+
+            var items = [];
+
+            elementRegistry.forEach(function (regItem, gfx) {
+                items.push(regItem);
+            });
+            console.log(items)
+            for (var i = 0; i < items.length; i++) {
+                var item = items[i];
+                if (item.id === id) {
+                    return item 
+                }
+                
+            }
+            // var targetElement = elementRegistry.get("Flow_0w20bgr")
+            // var modeling = this.modeler.get('modeling');
+            // debugger
+            // modeling.updateProperties(targetElement, { name: "sdlkjsajldlkasjd" });
+
+            console.log(items)
+            return null;
+        },
+        changeStepColor() {
+            var modeling = this.modeler.get('modeling');
+
+            var elem = this.getByIdStep(this.stepIdColor)
+            
+            if (elem) {
+                debugger
+                modeling.setColor([elem], {
+                    fill: this.stepColor,
+                    stroke: this.stepColor
+                })
+            } 
+            
+
+        },
         updateTabs(tab) {
+            this.tabs = tab
             if (tab) {
                 this.$refs.stepsEditor.getSteps()
             }

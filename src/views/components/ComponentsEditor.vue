@@ -1,6 +1,6 @@
 <template>
     <v-card
-        class="ma-4 px-4 py-1 mr-0">
+        class="ma-4 px-4 py-1">
         <div v-if="!steps.length">
             <h2>
                 Nenhum componente encontrado. Por favor adicione steps ao workflow na aba 'workflow' para que os componentes associados possam ser listados.

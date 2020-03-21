@@ -1,16 +1,17 @@
 <template>
     <v-card
-        class="ma-4 pa-4 mr-0">
+        class="ma-4 pa-4">
         <div id="canvas"></div>
-        <div class="properties-panel-parent"  id="properties"></div>
+        <v-expand-x-transition mode="out-in">
+            <workflow-properties-editor
+                v-if="selectedStep"/>
+        </v-expand-x-transition>
     </v-card>
 </template>
 
 <script>
 import Modeler from 'bpmn-js/lib/Modeler';
 import resizeTask from 'bpmn-js-task-resize/lib';
-import propertiesPanelModule  from 'bpmn-js-properties-panel'
-import propertiesProviderModule  from 'bpmn-js-properties-panel/lib/provider/bpmn'
 import convert from 'xml-js';
 import { mapActions, mapState } from 'vuex'
 
@@ -23,20 +24,25 @@ export default {
             default: false
         }
     },
-    data: () => ({
-        
-    }),
+    components: {
+        "workflow-properties-editor": ()=> import("./WorkflowPropertiesEditor")
+    },
+    data: () => ({}),
     computed: {
         ...mapState([
             'workflowName',
             'workflowData',
             'workflowDescription',
             'steps',
-            'modeler'
+            'modeler',
+            'selectedStep'
         ])
     },
     methods: {
-        ...mapActions(['changeModeler']),
+        ...mapActions([
+            'changeModeler',
+            'selectStep'
+        ]),
         getModelData(){
             let exportJSON = {};
 
@@ -72,19 +78,25 @@ export default {
             importedModel = importedModel.replace('</default>',"")
             
             this.modeler.importXML(importedModel);
-        }
+
+            const eventBus = this.modeler.get('eventBus');
+            const _this = this
+
+            eventBus.on(['element.click', 'shape.added'], (e) =>{
+                if (e.element.type === "bpmn:Task") {
+                    this.selectStep(e.element.businessObject);
+                } else {
+                    this.selectStep(undefined);
+                }
+            });
+        },
     },
     mounted() {
         this.changeModeler(new Modeler({ 
             container: '#canvas',
             additionalModules: [
-                resizeTask,
-                propertiesPanelModule,
-                propertiesProviderModule
+                resizeTask
             ],
-            propertiesPanel: {
-                parent: '#properties'
-            },
             taskResizingEnabled: true    
         }))
         this.loadDiagram()
@@ -95,5 +107,18 @@ export default {
 <style lang="scss">
 #canvas {
     height: 650px;
+    width: 100%;
+}
+#canvas-details {
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    width: 350px;
+    background: white;
+    border-left: 1px solid black;
+    border-radius: 0;
+    padding: 0 5px;
+    overflow-y: auto;
 }
 </style>

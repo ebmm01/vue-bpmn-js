@@ -10,7 +10,8 @@ export default new Vuex.Store({
         workflowId: "",
         workflowDescription: "",
         steps: [],
-        modeler: undefined
+        modeler: undefined,
+        selectedStep: undefined
     },
     mutations: {
         changeWorkflowName(state, name) {
@@ -30,6 +31,9 @@ export default new Vuex.Store({
         },
         setSteps(state, steps) {
             state.steps = steps
+        },
+        selectStep(state, selectedStep) {
+            state.selectedStep = selectedStep
         },
         updateStepComponent(state, {index, component}) {
             const localStep = state.steps[index];
@@ -55,6 +59,9 @@ export default new Vuex.Store({
         },
         setSteps: ({commit}, steps) => {
             commit('setSteps', steps)
+        },
+        selectStep: ({commit}, selectStep) => {
+            commit('selectStep', selectStep)
         },
         updateStepComponent: ({commit}, {index, component}) => {
             commit('updateStepComponent', {index, component})
