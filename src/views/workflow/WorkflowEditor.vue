@@ -36,12 +36,19 @@ export default {
             'steps',
             'modeler',
             'selectedStep'
-        ])
+        ]),
+        modeling() {
+            return this.modeler.get('modeling');
+        },
+        elementRegistry() {
+            return this.modeler.get('elementRegistry');
+        },
     },
     methods: {
         ...mapActions([
             'changeModeler',
-            'selectStep'
+            'selectStep',
+            'setWorkflowData',
         ]),
         getModelData(){
             let exportJSON = {};
@@ -82,9 +89,27 @@ export default {
             const eventBus = this.modeler.get('eventBus');
             const _this = this
 
-            eventBus.on(['element.click', 'shape.added'], (e) =>{
+            eventBus.on('element.click', (e) =>{
                 if (e.element.type === "bpmn:Task") {
+                    debugger
                     this.selectStep(e.element.businessObject);
+                } else {
+                    this.selectStep(undefined);
+                }
+            });
+            eventBus.on('commandStack.shape.create.postExecute', (e) =>{
+                if (e.context.shape.type === "bpmn:Task") {
+                    const selectedElem = this.elementRegistry.get(e.context.shape.id)
+                    const component = {
+                        c_name: selectedElem.id.replace("Activity", "Component"),
+                        c_description: "",
+                        c_relatedStep: selectedElem.id,
+                        c_type: "",
+                        c_alias: "",
+                        c_queueConfig: ""
+                    }
+                    this.modeling.updateProperties(selectedElem, {...component});
+                    this.selectStep(selectedElem.businessObject);
                 } else {
                     this.selectStep(undefined);
                 }
@@ -94,6 +119,7 @@ export default {
                     this.selectStep(undefined);
                 }
             })
+            this.setWorkflowData(undefined)
         },
     },
     mounted() {

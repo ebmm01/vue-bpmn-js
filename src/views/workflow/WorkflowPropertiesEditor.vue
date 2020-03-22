@@ -8,7 +8,7 @@
                 <v-expansion-panel>
                     <v-expansion-panel-header>Step</v-expansion-panel-header>
                     <v-expansion-panel-content>
-                        <p><b>Dados básicos</b></p>
+                        <p class="primary--text"><b>Dados básicos</b></p>
                         <v-text-field
                             class="mr-3"
                             label="Id"
@@ -71,11 +71,12 @@
 
                         <v-expand-transition mode="out-in">
                             <div v-if="selectedStep.outgoing && selectedStep.outgoing.length > 1">
-                                <p><b>Regras de negócio</b></p>
+                                <p class="primary--text"><b>Regras de negócio</b></p>
                                 <v-text-field
                                     v-for="item in selectedStep.outgoing"
                                     :key="item.id"
                                     class="mr-3"
+                                    @input="updateProperty(item, 'childrenStep')"
                                     :label="`${item.targetRef.name} (${item.targetRef.id})`"
                                     v-model="item.name"
                                     placeholder="Insira o id do step"
@@ -136,6 +137,8 @@
 
 <script>
 import {mapState, mapActions} from "vuex"
+
+
 export default {
     data: () => ({
         panel: 0,
@@ -174,12 +177,17 @@ export default {
                     ...(property === 'border' && {stroke: value.hexa || value})
                 })
                 property === 'background'? this.colorBg = value.hexa || value :  this.colorStroke = value.hexa || value;
-                debugger
+                this.selectStep(this.targetElementBusinessObject)
+            } 
+            else if (property === 'childrenStep'){
+                const flowSequence = this.elementRegistry.get(value.id);
+
+                this.modeling.updateProperties(flowSequence, { "name": value.name });
             } 
             else {
-                this.modeling.updateProperties(this.targetElement, { property: value });              
+                this.modeling.updateProperties(this.targetElement, { [property]: value });              
             }
-            this.selectStep(this.targetElementBusinessObject)
+            
         },
         openColorPickerBg() {
             this.colorBg = this.selectedStep.di.fill || this.colorBg

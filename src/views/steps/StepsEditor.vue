@@ -11,43 +11,12 @@
                 :headers="headers"
                 :items="steps"
                 :items-per-page="-1">
-                <template v-slot:item.parentSteps="{item}">
-                    {{showFamilyId(item.parentSteps)}}
-                </template>
+                <!-- 
                 <template v-slot:item.existenceConditions="{item}">
                     {{showExistenceConditions(item.childrenSteps)}}
-                </template>
-                <template v-slot:item.childrenSteps="{item}">
-                    {{showFamilyId(item.childrenSteps)}}
-                </template>
-                <template v-slot:item.acoes="{ item }">
-                   <div class="step-item-actions">
-                        <v-tooltip 
-                            transition="fade-transition"
-                            bottom
-                            color="secondary">
-                            <template v-slot:activator="{ on }">
-                                <v-btn
-                                    @click="openStepDialogEdit(item)"
-                                    class="mx-2"
-                                    color="primary"
-                                    v-on="on"
-                                    icon
-                                    depressed>
-                                    <v-icon>mdi-dots-vertical</v-icon>
-                                </v-btn>
-                            </template>
-                            <span>Editar step</span>
-                        </v-tooltip>
-                    </div>
-                </template>
+                </template> -->
             </v-data-table>
         </div>
-        <step-dialog-edit 
-            ref="stepDialogEditDialog"
-            @closeStepDialog="stepDialogEdit = false"
-            @saveStepDialog="updateStepDescription"
-            :show="stepDialogEdit" />
     </v-card>
 </template>
 
@@ -56,9 +25,6 @@ import { mapActions, mapState } from 'vuex'
 import convert from 'xml-js';
 
 export default {
-    components: {
-        "step-dialog-edit": ()=> import("../steps/StepDialogEdit")
-    },
     data() {
         return {
             stepDialogEdit: false,
@@ -67,10 +33,9 @@ export default {
                 { text: 'Nome', value: 'name' },
                 { text: 'Descrição', value: 'description' },
                 { text: 'Componente', value: 'component.name' },
-                { text: 'Condição de avanço:', value: 'existenceConditions'},
+                { text: 'Condição de avanço:', value: 'advanceConditions'},
                 { text: 'ParentSteps', value: 'parentSteps' },
                 { text: 'ChildrenSteps', value: 'childrenSteps' },
-                { text: 'Ações', value: 'acoes' },
             ],
         }
     },
@@ -82,7 +47,6 @@ export default {
     computed: {
         ...mapState([
             'workflowName',
-            'workflowData',
             'workflowDescription',
             'steps',
             'modeler'
@@ -93,30 +57,41 @@ export default {
         getSteps() {
             let steps = undefined
             let processSteps = []
-            this.modeler.saveXML({ format: true }, (err, xml) => {
-                var result1 = convert.xml2json(xml, {compact: true, spaces: 4});
-                steps = JSON.parse(result1)
-                steps = steps["bpmn:definitions"]["bpmn:process"]
-            });
-            if (steps["bpmn:task"]) {
-                if (steps["bpmn:task"].length > 1) {
-                    steps["bpmn:task"].map((item, index) => {
-                        processSteps.push(this.setStepItem(item,steps["bpmn:sequenceFlow"],index))
-                    })
-                } else {
-                    processSteps.push(this.setStepItem(steps["bpmn:task"], steps["bpmn:sequenceFlow"]))
-                }
-            }
+            
+            const elementRegistry = this.modeler.get('elementRegistry');
+            const elementList = elementRegistry.getAll();	
+            const taskList = elementList.filter(elem => elem.type === "bpmn:Task");
+            
+            taskList.map((item, index) => {
+                processSteps.push(this.setStepItem(item, index))
+            })
             this.setSteps(processSteps)
         },
-        setStepItem(item, sequenceFlow, index = 1) {
+        setStepItem(item, index = 1) {
             return {
-                id: item._attributes.id,
-                name: item._attributes.name,
-                description: this.getStepDescription(item._attributes.id),
-                parentSteps: sequenceFlow? this.getParentSteps(item._attributes.id, sequenceFlow): [],
-                component: this.getStepComponent(item._attributes.id, index),
-                childrenSteps: sequenceFlow? this.getChildrenSteps(item._attributes.id, sequenceFlow): [],
+                id: item.businessObject.id,
+                name: item.businessObject.name,
+                description: item.businessObject.description,
+                advanceConditions: this.getAdvanceConditions(item),
+                parentSteps: this.getFamilySteps(item, {source:"sourceRef", target: "targetRef", direction:"incoming"}),
+                childrenSteps: this.getFamilySteps(item, {source:"targetRef", target: "sourceRef", direction:"outgoing"}),
+                component: this.getStepComponent(item.id, index),
+            }
+        },
+        getFamilySteps(item, {source, target, direction}) {
+            if (item.businessObject[direction]) {
+                return  item.businessObject[direction].map(item => {
+                    if (item[target].$type === "bpmn:Task") {
+                        return item[source].id
+                    }
+                })
+            }
+        },
+        getAdvanceConditions(item) {
+            if (item.outgoing && item.outgoing.length > 1) {
+                return item.outgoing.map(condition => {
+                    return condition.businessObject.name
+                })
             }
         },
         getStepComponent(id, index) {
@@ -136,78 +111,7 @@ export default {
                 }
             }
             return defaultComponent
-        },
-        getStepDescription(id) {
-            if (this.steps) {
-                const stepIndex = this.steps.findIndex(item => item.id === id)
-                if (stepIndex !== -1) {
-                    return this.steps[stepIndex].description
-                }
-                return 
-            }
-            return 
-        },
-        getParentSteps(id, sequenceFlow) {
-            let result = []
-            if (Array.isArray(sequenceFlow)) {
-                sequenceFlow.map(item => {
-                    if (item._attributes.targetRef === id) {
-                        result.push({id: item._attributes.sourceRef})
-                    }
-                })
-            } else {
-                if (sequenceFlow._attributes.targetRef === id)
-                    result.push({id: sequenceFlow._attributes.sourceRef})
-            }
-            
-            return result
-        },
-        getChildrenSteps(id, sequenceFlow) {
-            let result = []
-            if (Array.isArray(sequenceFlow))  {
-                let count = sequenceFlow.filter(item => item._attributes.sourceRef === id)
-                sequenceFlow.map(item => {
-                    if (item._attributes.sourceRef === id) {
-                        result.push({
-                            id: item._attributes.targetRef,
-                            ...(count.length > 1? {
-                                conditions: item._attributes.name
-                            }:{})
-                        })
-                    }
-                })
-            } else {
-                if (sequenceFlow._attributes.sourceRef === id)
-                    result.push({id: sequenceFlow._attributes.targetRef})
-            }
-            
-            return result
-        },
-        showFamilyId(steps) {
-            if (steps && steps.length) {
-                let ids = []
-                steps.map(item => ids.push(item.id))
-                return ids.join(",")
-            } 
-            return
-        },
-        showExistenceConditions(childrenSteps) {
-            if (childrenSteps && childrenSteps.length> 1) {
-                let existenceConditions = []
-                childrenSteps.map(item => existenceConditions.push(item.conditions))
-                return existenceConditions.join(" || ")
-            } 
-            return
-        },
-        openStepDialogEdit(item) {
-            this.$refs.stepDialogEditDialog.loadDefaultValues(item)
-            this.stepDialogEdit = true
-        },
-        updateStepDescription({description, id}) {
-            const stepIndex = this.steps.findIndex(item => item.id === id);
-            this.steps[stepIndex].description = description;
-            this.stepDialogEdit = false
-        },
+        }
     }
 }
 </script>
