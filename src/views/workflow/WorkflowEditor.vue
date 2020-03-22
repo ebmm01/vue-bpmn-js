@@ -89,6 +89,11 @@ export default {
                     this.selectStep(undefined);
                 }
             });
+            eventBus.on(["shape.remove","shape.delete" ], e => {
+                if (e.element.type === "bpmn:Task") {
+                    this.selectStep(undefined);
+                }
+            })
         },
     },
     mounted() {
@@ -120,5 +125,9 @@ export default {
     border-radius: 0;
     padding: 0 5px;
     overflow-y: auto;
+}
+.bjs-powered-by {
+    left: 15px !important;
+    right: unset !important;
 }
 </style>

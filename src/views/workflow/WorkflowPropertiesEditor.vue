@@ -12,6 +12,7 @@
                         <v-text-field
                             class="mr-3"
                             label="Id"
+                             @input="updateProperty(selectedStep.id, 'id')"
                             v-model="selectedStep.id"
                             placeholder="Insira o id do step">
                         </v-text-field>
@@ -25,24 +26,49 @@
                         <v-text-field
                             class="mr-3"
                             label="Descrição"
+                             @input="updateProperty(selectedStep.description, 'description')"
                             v-model="selectedStep.description"
                             placeholder="Insira a descrição do step">
                         </v-text-field>
 
-                        <v-text-field
+                        <v-text-field 
                             class="mr-3"
-                            label="Background"
-                            @input="updateProperty(selectedStep.di.fill, 'background')"
-                            v-model="selectedStep.di.fill"
-                            placeholder="Insira o background">
+                            :value="colorBg === '#fff'? selectedStep.di.fill: colorBg"
+                            placeholder="Insira a cor de fundo do step"
+                            @click="openColorPickerBg"
+                            label="Cor de fundo do step">
+                            <template v-slot:append>
+                                <v-btn 
+                                    v-if="colorPickerBg"
+                                    icon
+                                    style="height: 30px; width: 30px"
+                                    @click="colorPickerBg = false">
+                                    <v-icon>mdi-close</v-icon>
+                                </v-btn>
+                            </template>
+                        </v-text-field>
+                        
+                        <div id="colorPickerBg" />
+
+                        <v-text-field 
+                            class="mr-3"
+                            :value="colorStroke === '#fff'? selectedStep.di.stroke: colorStroke"
+                            @click="openColorPickerStroke"
+                            label="Borda"
+                            placeholder="Insira a borda">
+                            <template v-slot:append>
+                                <v-btn 
+                                    v-if="colorPickerStroke"
+                                    icon
+                                    style="height: 30px; width: 30px"
+                                    @click="colorPickerStroke = false">
+                                    <v-icon>mdi-close</v-icon>
+                                </v-btn>
+                            </template>
                         </v-text-field>
 
-                        <v-text-field
-                            class="mr-3"
-                            label="Borda"
-                            v-model="selectedStep.di.stroke"
-                            placeholder="Insira a borda">
-                        </v-text-field>
+                        <div id="colorPickerStroke" />
+
                         <v-expand-transition mode="out-in">
                             <div v-if="selectedStep.outgoing && selectedStep.outgoing.length > 1">
                                 <p><b>Regras de negócio</b></p>
@@ -57,7 +83,44 @@
                             </div>
                         </v-expand-transition>
                         
-                        
+                        <v-menu 
+                            v-model="colorPickerBg" 
+                            bottom=""
+                            nudge-bottom="-24"
+                            attach="#colorPickerBg"
+                            activator="#colorPickerBg"
+                            :close-on-content-click="true">
+                            <v-card>
+                                <v-card-text class="pa-0">
+                                    <v-color-picker 
+                                        mode="hexa"
+                                        hide-inputs
+                                        @update:color="updateProperty(colorBg, 'background')"
+                                        v-model="colorBg"
+                                        flat />
+                                </v-card-text>
+                            </v-card>
+                        </v-menu>
+
+                        <v-menu 
+                            v-model="colorPickerStroke" 
+                            bottom=""
+                            nudge-bottom="-24"
+                            attach="#colorPickerStroke"
+                            activator="#colorPickerStroke"
+                            :close-on-content-click="true">
+                            <v-card>
+                                <v-card-text class="pa-0">
+                                    <v-color-picker 
+                                        mode="hexa"
+                                        hide-inputs
+                                        @update:color="updateProperty(colorStroke, 'border')"
+                                        v-model="colorStroke"
+                                        flat />
+                                </v-card-text>
+                            </v-card>
+                        </v-menu>
+
                     </v-expansion-panel-content>
                 </v-expansion-panel>
                 <v-expansion-panel>
@@ -76,6 +139,10 @@ import {mapState, mapActions} from "vuex"
 export default {
     data: () => ({
         panel: 0,
+        colorPickerBg: false,
+        colorPickerStroke: false,
+        colorBg: "#fff",
+        colorStroke: "#fff"
     }),
     computed: {
         ...mapState([
@@ -88,10 +155,12 @@ export default {
         targetElement() {
             return this.elementRegistry.get(this.selectedStep.id)
         },
+        targetElementBusinessObject() {
+            return this.elementRegistry.get(this.selectedStep.id).businessObject
+        },
         modeling() {
             return this.modeler.get('modeling');
         }
-
     },
     methods: {
         ...mapActions([
@@ -99,14 +168,35 @@ export default {
             'selectStep'
         ]),
         updateProperty(value, property) {
-            if (property === 'background') {
+            if (property === 'background' || property === 'border') {
                 this.modeling.setColor(this.targetElement, {
-                    fill: value
+                    ...(property === 'background' && {fill: value.hexa || value}),
+                    ...(property === 'border' && {stroke: value.hexa || value})
                 })
-            } else {
-                this.modeling.updateProperties(this.targetElement, { property: value });
+                property === 'background'? this.colorBg = value.hexa || value :  this.colorStroke = value.hexa || value;
+                debugger
+            } 
+            else {
+                this.modeling.updateProperties(this.targetElement, { property: value });              
             }
+            this.selectStep(this.targetElementBusinessObject)
+        },
+        openColorPickerBg() {
+            this.colorBg = this.selectedStep.di.fill || this.colorBg
+            this.colorPickerBg = true
+        },
+        openColorPickerStroke() {
+            this.colorStroke = this.selectedStep.di.stroke || this.colorStroke
+            this.colorPickerStroke = true
         }
     }
 }
 </script>
+
+<style lang="scss">
+
+#colorPicker {
+    width: 100%;
+    height: 1px;
+}
+</style>
