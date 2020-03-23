@@ -55,7 +55,6 @@ export default {
     methods: {
         ...mapActions(['setSteps']),
         getSteps() {
-            let steps = undefined
             let processSteps = []
             
             const elementRegistry = this.modeler.get('elementRegistry');
@@ -74,8 +73,7 @@ export default {
                 description: item.businessObject.description,
                 advanceConditions: this.getAdvanceConditions(item),
                 parentSteps: this.getFamilySteps(item, {source:"sourceRef", target: "targetRef", direction:"incoming"}),
-                childrenSteps: this.getFamilySteps(item, {source:"targetRef", target: "sourceRef", direction:"outgoing"}),
-                component: this.getStepComponent(item.id, index),
+                childrenSteps: this.getFamilySteps(item, {source:"targetRef", target: "sourceRef", direction:"outgoing"})
             }
         },
         getFamilySteps(item, {source, target, direction}) {
@@ -94,24 +92,6 @@ export default {
                 })
             }
         },
-        getStepComponent(id, index) {
-            const defaultComponent = {
-                name: `Component_${index +1}`,
-                description: undefined,
-                relatedStep: id,
-                type: undefined,
-                alias: undefined
-            }
-
-            if (this.steps) {
-                const stepIndex = this.steps.findIndex(item => item.id === id)
-                if (stepIndex !== -1 && this.steps[stepIndex].component) {
-                    this.steps[stepIndex].component.relatedStep = id
-                    return this.steps[stepIndex].component
-                }
-            }
-            return defaultComponent
-        }
     }
 }
 </script>

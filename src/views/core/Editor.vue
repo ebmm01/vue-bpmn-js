@@ -290,7 +290,8 @@
                     reverse-transition="none"
                     transition="none"
                     eager>
-                    <components />
+                    <components 
+                        ref='componentsEditor'/>
 
                 </v-tab-item>
                 
@@ -398,8 +399,13 @@ export default {
             this.stepColor = elem.businessObject.di.fill;
         },
         updateTabs(tab) {
-            if (tab) {
-                this.$refs.stepsEditor.getSteps()
+            switch(tab) {
+                case 1:
+                    this.$refs.stepsEditor.getSteps();
+                    break;
+                case 2:
+                    this.$refs.componentsEditor.getComponents();
+                    break
             }
         },
         openWorkflowDialog(newWf) {
@@ -409,15 +415,15 @@ export default {
                 wfDescription: newWf? "" : this.workflowDescription
             }, newWf)
         },
-        newWorkflow(payload) {
+        async newWorkflow(payload) {
             this.changingWorkflow = true
-            setTimeout(() => {
+            setTimeout(async () => {
                 this.changeWorkflowName(payload.name)
                 this.changeWorkflowDescription(payload.description)
                 this.setWorkflowId("")
                 this.setWorkflowData(undefined);
                 this.setSteps([]);
-                this.$refs.wfEditor.loadDiagram()
+                await this.$refs.wfEditor.loadDiagram()
                 this.$refs.stepsEditor.getSteps()
                 this.changingWorkflow = false
             }, 600)
@@ -499,7 +505,7 @@ export default {
                 this.setWorkflowData(response.data.modeler);
                 this.setSteps(response.data.steps)
                 this.setWorkflowId(response.data._id)
-                this.$refs.wfEditor.loadDiagram()
+                await this.$refs.wfEditor.loadDiagram()
 
             } catch {
                 return

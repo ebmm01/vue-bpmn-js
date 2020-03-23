@@ -49,6 +49,7 @@ export default {
             'changeModeler',
             'selectStep',
             'setWorkflowData',
+            'selectComponent',
         ]),
         getModelData(){
             let exportJSON = {};
@@ -83,20 +84,32 @@ export default {
             let importedModel = convert.json2xml(loadDiagram, {compact: true})
             importedModel = importedModel.replace('<default>',"")
             importedModel = importedModel.replace('</default>',"")
-            
-            this.modeler.importXML(importedModel);
 
+            this.modeler.importXML(importedModel);
+            
+            this.setWorkflowData(undefined)
+        },
+        setHandlers() {
             const eventBus = this.modeler.get('eventBus');
             const _this = this
 
             eventBus.on('element.click', (e) =>{
                 if (e.element.type === "bpmn:Task") {
-                    debugger
                     this.selectStep(e.element.businessObject);
+                    this.selectComponent({
+                        c_name:e.element.businessObject.$attrs.c_name,
+                        c_description:e.element.businessObject.$attrs.c_description,
+                        c_relatedStep:e.element.businessObject.$attrs.c_relatedStep,
+                        c_type:e.element.businessObject.$attrs.c_type,
+                        c_alias:e.element.businessObject.$attrs.c_alias,
+                        c_queueConfig:e.element.businessObject.$attrs.c_queueConfig,
+                    });
                 } else {
                     this.selectStep(undefined);
+                    this.selectComponent(undefined);
                 }
             });
+
             eventBus.on('commandStack.shape.create.postExecute', (e) =>{
                 if (e.context.shape.type === "bpmn:Task") {
                     const selectedElem = this.elementRegistry.get(e.context.shape.id)
@@ -110,19 +123,21 @@ export default {
                     }
                     this.modeling.updateProperties(selectedElem, {...component});
                     this.selectStep(selectedElem.businessObject);
+                    this.selectComponent(component);
                 } else {
                     this.selectStep(undefined);
+                    this.selectComponent(undefined);
                 }
             });
             eventBus.on(["shape.remove","shape.delete" ], e => {
                 if (e.element.type === "bpmn:Task") {
                     this.selectStep(undefined);
+                    this.selectComponent(undefined);
                 }
             })
-            this.setWorkflowData(undefined)
-        },
+        }
     },
-    mounted() {
+    async mounted() {
         this.changeModeler(new Modeler({ 
             container: '#canvas',
             additionalModules: [
@@ -131,6 +146,7 @@ export default {
             taskResizingEnabled: true    
         }))
         this.loadDiagram()
+        this.setHandlers()
     }
 }
 </script>
