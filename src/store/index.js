@@ -47,11 +47,6 @@ export default new Vuex.Store({
         selectComponent(state, selectedComponent) {
             state.selectedComponent = selectedComponent
         },
-        updateStepComponent(state, {index, component}) {
-            const localStep = state.steps[index];
-            localStep.component = component
-            state.steps.splice(index, 1, localStep)
-        }
     },
     actions: {
         changeWorkflowName: ({commit}, name) => {
@@ -84,8 +79,5 @@ export default new Vuex.Store({
         selectComponent: ({commit}, selectComponent) => {
             commit('selectComponent', selectComponent)
         },
-        updateStepComponent: ({commit}, {index, component}) => {
-            commit('updateStepComponent', {index, component})
-        }
     },
 })

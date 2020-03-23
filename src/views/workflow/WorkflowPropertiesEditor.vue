@@ -3,10 +3,13 @@
         id="canvas-details">
         <v-fade-transition mode="out-in">
             <v-expansion-panels
+                flat
                 v-model="propertiesAccordion"
                 hover>
                 <v-expansion-panel>
-                    <v-expansion-panel-header>Step</v-expansion-panel-header>
+                    <v-expansion-panel-header>
+                        Step
+                    </v-expansion-panel-header>
                     <v-expansion-panel-content>
                         <p class="primary--text"><b>Dados básicos</b></p>
                         <v-text-field
@@ -54,8 +57,8 @@
                             class="mr-3"
                             :value="colorStroke === '#fff'? selectedStep.di.stroke: colorStroke"
                             @click="openColorPickerStroke"
-                            label="Borda"
-                            placeholder="Insira a borda">
+                            label="Cor da borda & fonte"
+                            placeholder="Insira cor da borda">
                             <template v-slot:append>
                                 <v-btn 
                                     v-if="colorPickerStroke"
@@ -158,8 +161,8 @@
                             v-model="selectedComponent.c_alias">
                         </v-text-field>
                         <v-text-field
-                            label="Descrição"
-                            placeholder="Insira a descrição do component"
+                            label="QueueConfig"
+                            placeholder="Insira a a configuração de fila do componente"
                             @input="updateProperty(selectedComponent.c_queueConfig, 'c_queueConfig')"
                             v-model="selectedComponent.c_queueConfig">
                         </v-text-field>
@@ -264,5 +267,18 @@ export default {
 #colorPicker {
     width: 100%;
     height: 1px;
+}
+
+#canvas-details {
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    width: 350px;
+    background: white;
+    box-shadow: 4px 0px 9px 1px darkgrey;
+    border-radius: 0;
+    overflow-y: auto;
+
 }
 </style>

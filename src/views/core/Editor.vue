@@ -16,6 +16,7 @@
             class="workflow-list">
              <page-title 
                 :showBack="false"
+                class="workflow-list-header"
                 title="Lista de workflows"
                 description=""> 
                 <template v-slot:left>
@@ -63,12 +64,27 @@
                 <li
                     v-for="wf in workflowList"
                     :key="wf._id"
-                    class="wf-list-item d-flex flex-column elevation-2 ma-2 pa-2"
+                    class="wf-list-item d-flex flex-column px-2 py-3"
                     :class="{'active': wf._id === workflowId}">
                     <div>
-                        <p style="font-size:12px" class="mb-0"><b>Nome:</b>  {{wf.name}}</p>
-                        <p style="font-size:12px" class="mb-0"><b>Id:</b>  {{wf._id}}</p>
-                        <p style="font-size:12px" class="mb-0"><b>Atualizado em:</b>{{toLocaleDate(wf.lastUpdatedAt) }}</p>
+                        <p 
+                            style="font-size:12px" 
+                            class="mb-0"
+                            :class="wf._id === workflowId? 'white--text': ''">
+                            <b>Nome:</b>  {{wf.name}}
+                        </p>
+                        <p 
+                            style="font-size:12px" 
+                            class="mb-0"
+                            :class="wf._id === workflowId? 'white--text': ''">
+                            <b>Id:</b>  {{wf._id}}
+                        </p>
+                        <p 
+                            style="font-size:12px" 
+                            class="mb-0"
+                            :class="wf._id === workflowId? 'white--text': ''">
+                            <b>Atualizado em:</b>{{toLocaleDate(wf.lastUpdatedAt) }}
+                        </p>
                     </div>
                     <div>
                         <v-tooltip 
@@ -79,7 +95,8 @@
                                 <v-btn
                                     @click=" selecWorkflow(wf._id)"
                                     class="mx-2"
-                                    color="primary"
+                                    style="transition: none"
+                                    :color="wf._id === workflowId? 'white': 'primary'"
                                     v-on="on"
                                     icon
                                     depressed>
@@ -97,7 +114,8 @@
                                 <v-btn
                                     @click="deleteWorkflow(wf._id)"
                                     class="mx-2"
-                                    color="primary"
+                                    style="transition: none"
+                                    :color="wf._id === workflowId? 'white': 'primary'"
                                     v-on="on"
                                     icon
                                     depressed>
@@ -322,8 +340,8 @@
                     <br/><br/>
                     <span style="text-decoration: line-through;">- Cores nos steps;</span><br/>
                     <span style="text-decoration: line-through;">- Gerenciamento de cor no workflow</span><br/>
-                    - Gerenciamento de step no workflow<br/>
-                    - Gerenciamento de component no workflow<br/>
+                    <span style="text-decoration: line-through;">- Gerenciamento de step no workflow</span><br/>
+                    <span style="text-decoration: line-through;">- Gerenciamento de component no workflow</span><br/>
                     - Geração de exemplos de avanço de processo<br/>
                     - Melhoria na geração de imagens<br/>
                     - Tradução
@@ -420,7 +438,18 @@ export default {
             setTimeout(async () => {
                 this.changeWorkflowName(payload.name)
                 this.changeWorkflowDescription(payload.description)
-                this.setWorkflowId("")
+                const data = {
+                    _id: "Elemento ainda não salvo...",
+                    name: payload.name,
+                    description: payload.description,
+                    lastUpdateDate: new Date()
+                }
+                if (this.workflowList.length) {
+                    this.workflowList.unshift(data)
+                } else {
+                    this.workflowList = [data]
+                }
+                this.setWorkflowId(data._id)
                 this.setWorkflowData(undefined);
                 this.setSteps([]);
                 await this.$refs.wfEditor.loadDiagram()
@@ -609,10 +638,9 @@ export default {
 
     .workflow-details {
         width: 100%;
-        margin-left: 10px;
         display: flex;
         flex-direction: column;
-        border-left: 1px solid #1976d2;
+        box-shadow: -4px 0px 6px -5px darkgrey;
 
         .v-tabs-bar__content {
             background: rgba(0,0,0, 0.1);
@@ -625,7 +653,6 @@ export default {
 
                 &.v-tab--active {
                     background: white;
-                    border-radius: 5px 5px 0 0;
                     border-bottom: 1px solid transparent;
                     box-shadow: 0px 0px 5px darkgrey;
                     transition: 0s;
@@ -636,14 +663,44 @@ export default {
 
     .workflow-list {
         width: 400px;
-        box-shadow: 1px 1px 4px 1px darkgrey;
+        background: rgba(0,0,0, 0.1);
+
+        .workflow-list-header header {
+            background: rgba(0,0,0, 0.1) !important;
+            
+            .v-toolbar__title {
+                height: 100% !important;
+            }
+            .white--text {
+                color: rgba(0,0,0, 0.75) !important;
+            }
+        }
 
         .wf-list-item {
-            border-radius:  5px;
-            border: 2px solid transparent;
+            overflow: hidden;   
+            position: relative;
+            transition: all ease 0.2s;
+
+            div:nth-child(2) {
+                right: -40px;
+                top: 50%;
+                transform: translateY(-50%);
+                position: absolute;
+                display: flex;
+                flex-direction: column;
+                transition: all ease 0.2s;
+            }
+
+            &:hover {
+                background: rgba(0,0,0, 0.15);
+
+                div:nth-child(2){
+                    transform: translate(-40px, -50%);
+                }
+            }
 
             &.active {
-                border: 2px solid #1976d2
+                background: #1976d2;
             }
         }
 

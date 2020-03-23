@@ -1,5 +1,6 @@
 <template>
     <v-card
+        style="overflow:hidden;"
         class="ma-4 pa-4">
         <div id="canvas"></div>
         <v-expand-x-transition mode="out-in">
@@ -156,18 +157,7 @@ export default {
     height: 650px;
     width: 100%;
 }
-#canvas-details {
-    position: absolute;
-    right: 0;
-    top: 0;
-    height: 100%;
-    width: 350px;
-    background: white;
-    border-left: 1px solid black;
-    border-radius: 0;
-    padding: 0 5px;
-    overflow-y: auto;
-}
+
 .bjs-powered-by {
     left: 15px !important;
     right: unset !important;
