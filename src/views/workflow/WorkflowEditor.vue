@@ -118,7 +118,15 @@ export default {
             const eventBus = this.modeler.get('eventBus');
             const _this = this
 
+            document.addEventListener("keydown", function(event) {
+                if (_this.selectedStep && (event.key == "Backspace" || event.key == "Delete")) {
+                    const elem = _this.elementRegistry.get(_this.selectedStep.id)
+                    _this.modeling.removeElements([elem])
+                }
+            })
+
             eventBus.on('element.click', (e) =>{
+                
                 if (e.element.type === "bpmn:Task") {
                     this.selectStep(e.element.businessObject);
                     this.selectComponent({
@@ -154,6 +162,7 @@ export default {
                     this.selectComponent(undefined);
                 }
             });
+
             eventBus.on(["shape.remove","shape.delete" ], e => {
                 if (e.element.type === "bpmn:Task") {
                     this.selectStep(undefined);
