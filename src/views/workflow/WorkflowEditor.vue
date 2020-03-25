@@ -1,13 +1,37 @@
 <template>
-    <v-card
-        style="overflow:hidden;"
-        class="ma-4 pa-4">
-        <div id="canvas"></div>
-        <v-expand-x-transition mode="out-in">
-            <workflow-properties-editor
-                v-if="selectedStep"/>
-        </v-expand-x-transition>
-    </v-card>
+    <div id="workflow-editor">
+        <v-card
+            style="overflow:hidden;"
+            class="ma-4 pa-4">
+            <div id="canvas"></div>
+            <v-expand-x-transition mode="out-in">
+                <workflow-properties-editor
+                    v-if="selectedStep"/>
+            </v-expand-x-transition>
+        </v-card>
+        <div
+            id="canvas-actions">
+            <v-btn
+                icon
+                title="Desfazer"
+                @click="undoAction">
+                <v-icon>mdi-undo</v-icon>
+            </v-btn>
+            <v-btn
+                icon
+                title="Refazer"
+                @click="redoAction">
+                <v-icon>mdi-redo</v-icon>
+            </v-btn>
+            <v-btn
+                icon
+                title="Limpar canvas"
+                @click="emptyCanvas">
+                <v-icon>mdi-delete-empty-outline</v-icon>
+            </v-btn>
+        </div>
+            
+    </div>
 </template>
 
 <script>
@@ -136,6 +160,18 @@ export default {
                     this.selectComponent(undefined);
                 }
             })
+        },
+        undoAction() {
+            this.modeler.get('commandStack').undo()
+        },
+        redoAction() {
+            this.modeler.get('commandStack').redo()
+        },
+        emptyCanvas() {
+            const elements = this.elementRegistry.getAll().slice(1)
+            if (elements.length) {
+                this.modeling.removeElements(elements)
+            }
         }
     },
     async mounted() {
@@ -161,5 +197,34 @@ export default {
 .bjs-powered-by {
     left: 15px !important;
     right: unset !important;
+}
+#workflow-editor {
+    position: relative;
+}
+
+#canvas-actions {
+    position: absolute;
+    top: 10px;
+    left: 52px;
+    background: #FAFAFA;
+    border: solid 1px #CCC;
+    border-radius: 2px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+
+    .v-btn {
+        .v-icon {
+            color: rgb(0, 0, 0);
+        }
+        &::before {
+            content: unset;
+        }
+        &:hover {
+            .v-icon {
+                color: rgb(255, 116, 0);
+            }
+        }
+    }
 }
 </style>
