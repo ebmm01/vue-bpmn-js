@@ -25,9 +25,15 @@
             </v-btn>
             <v-btn
                 icon
+                title="Excluir elemento(s)"
+                @click="removeSelectedElements">
+                <v-icon>mdi-delete-outline</v-icon>
+            </v-btn>
+            <v-btn
+                icon
                 title="Limpar canvas"
                 @click="emptyCanvas">
-                <v-icon>mdi-delete-empty-outline</v-icon>
+                <v-icon>mdi-layers-off</v-icon>
             </v-btn>
         </div>
             
@@ -119,9 +125,11 @@ export default {
             const _this = this
 
             document.addEventListener("keydown", function(event) {
-                if (_this.selectedStep && (event.key == "Backspace" || event.key == "Delete")) {
-                    const elem = _this.elementRegistry.get(_this.selectedStep.id)
-                    _this.modeling.removeElements([elem])
+                if (event.key == "Delete") {
+                    _this.removeSelectedElements()
+                }
+                if (event.ctrlKey && event.key === 'z') {
+                    _this.undoAction()
                 }
             })
 
@@ -175,6 +183,12 @@ export default {
         },
         redoAction() {
             this.modeler.get('commandStack').redo()
+        },
+        removeSelectedElements() {
+            const selection = this.modeler.get('selection')
+            let selectedElements = selection.get();
+
+            this.modeling.removeElements(selectedElements)
         },
         emptyCanvas() {
             const elements = this.elementRegistry.getAll().slice(1)

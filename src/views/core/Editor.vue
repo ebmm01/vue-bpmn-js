@@ -185,7 +185,7 @@
                                     indeterminate
                                     color="primary" />
                             </v-overlay>
-                            <canvas id="canvasImg"></canvas>
+                            <div id="imgImg" src="" />
                         </div>
 
                         <v-divider></v-divider>
@@ -206,6 +206,7 @@
                                 Baixar como SVG
                             </v-btn>
                             <v-btn
+                                disabled
                                 href="#"
                                 color="primary"
                                 depressed=""
@@ -286,6 +287,11 @@
                     <v-icon left>mdi-cogs</v-icon>
                 </v-tab>
                 
+                <v-tab>
+                    Simular processo
+                    <v-icon left>mdi-crane</v-icon>
+                </v-tab>
+                
                 <v-tab-item
                     reverse-transition="none"
                     transition="none"
@@ -310,6 +316,15 @@
                     eager>
                     <components 
                         ref='componentsEditor'/>
+
+                </v-tab-item>
+
+                <v-tab-item
+                    reverse-transition="none"
+                    transition="none"
+                    eager>
+                    <process-example 
+                        ref="processExample"/>
 
                 </v-tab-item>
                 
@@ -342,8 +357,9 @@
                     <span style="text-decoration: line-through;">- Gerenciamento de cor no workflow</span><br/>
                     <span style="text-decoration: line-through;">- Gerenciamento de step no workflow</span><br/>
                     <span style="text-decoration: line-through;">- Gerenciamento de component no workflow</span><br/>
+                    <span style="text-decoration: line-through;">- Melhoria na geração de imagens</span><br/>
+                    - DOwnload de imagem em PNG<br/>
                     - Geração de exemplos de avanço de processo<br/>
-                    - Melhoria na geração de imagens<br/>
                     - Tradução
                 </v-card-text>
 
@@ -374,7 +390,8 @@ export default {
         "workflow-editor": () => import('../workflow/WorkflowEditor'),
         "steps": () => import("../steps/StepsEditor"),
         "workflow-dialog-edit": () => import("../workflow/WorkflowDialogEdit"),
-        "components": () => import("../components/ComponentsEditor")
+        "components": () => import("../components/ComponentsEditor"),
+        "process-example": () => import("../process/ProcessExample")
     },
     data() {
         return {
@@ -416,13 +433,17 @@ export default {
             this.stepIdColor = elem.id;
             this.stepColor = elem.businessObject.di.fill;
         },
-        updateTabs(tab) {
-            switch(tab) {
+        async updateTabs(tab) {
+            
+            switch(tab) {                
                 case 1:
                     this.$refs.stepsEditor.getSteps();
                     break;
                 case 2:
                     this.$refs.componentsEditor.getComponents();
+                    break
+                case 3:
+                    await this.$refs.processExample.initProcessExample();
                     break
             }
         },
@@ -555,34 +576,20 @@ export default {
             this.imageDialog = true
             setTimeout(() => {
                 // Gerando imagem
-                const canvg = require('canvg-browser'),
-                    canvas = document.getElementById('canvasImg');
+                const svg = document.querySelector('.djs-container > svg');
+                const img = document.getElementById("imgImg")
 
-                const svg = document.querySelector('.djs-container > svg').outerHTML;
-
-                const options = {
-                    log: false,
-                    ignoreDimensions: false,
-                    ignoreMouse: true
-                };
-
-                canvg(canvas, svg, options);
-
-                const img = canvas.toDataURL("image/png");
+                img.innerHTML = svg.outerHTML
                 
-                const svgBlob = new Blob([svg], {type:"image/svg+xml;charset=utf-8"});
+                const svgBlob = new Blob([svg.outerHTML], {type:"image/svg+xml;charset=utf-8"});
                 const svgUrl = URL.createObjectURL(svgBlob);
 
                 const downloadSVGLink = document.getElementById("downloadSvg");
                 downloadSVGLink.href = svgUrl;
                 downloadSVGLink.download = `${this.workflowName}.svg`
                 
-                const downloadPNGLink = document.getElementById("downloadPng");
-                downloadPNGLink.href = img;
-                downloadPNGLink.download = `${this.workflowName}.png`
-
                 this.overlay = false
-            }, 500)
+            }, 200)
         },
         closeImgDialog() {
             this.imageDialog = false
@@ -592,12 +599,7 @@ export default {
             
             const downloadPNGLink = document.getElementById("downloadPng");
             downloadPNGLink.href = "#";
-            downloadPNGLink.download = ""   
-
-            const canvas = document.getElementById("canvasImg");
-
-            const context = canvas.getContext('2d');
-            context.clearRect(0, 0, canvas.width, canvas.height);
+            downloadPNGLink.download = ""
         }
     },
     async created() {
@@ -612,7 +614,7 @@ export default {
 </script>
 
 <style lang="scss">
-#canvasImg {
+#imgImg {
     width: 100%;
     height: 650px;
 }
