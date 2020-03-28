@@ -358,8 +358,9 @@
                     <span style="text-decoration: line-through;">- Gerenciamento de step no workflow</span><br/>
                     <span style="text-decoration: line-through;">- Gerenciamento de component no workflow</span><br/>
                     <span style="text-decoration: line-through;">- Melhoria na geração de imagens</span><br/>
-                    - DOwnload de imagem em PNG<br/>
-                    - Geração de exemplos de avanço de processo<br/>
+                    <span style="text-decoration: line-through;">- Geração de exemplos de avanço de processo</span><br/>
+                    - Reset process na simulação de processo<br/>
+                    - Download de imagem em PNG<br/>
                     - Tradução
                 </v-card-text>
 
@@ -556,10 +557,16 @@ export default {
                 this.setSteps(response.data.steps)
                 this.setWorkflowId(response.data._id)
                 await this.$refs.wfEditor.loadDiagram()
-
-            } catch {
+                this.$refs.stepsEditor.getSteps();
+                this.$refs.componentsEditor.getComponents();
+                setTimeout(async () => await this.$refs.processExample.initProcessExample(), 200)
+                
+            } catch(error) {
+                console.log(error)
                 return
             }
+            
+
         },
         async getWfModelsAPI() {
             let response = undefined

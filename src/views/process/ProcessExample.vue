@@ -26,19 +26,35 @@
             class="process-example-advance ma-4 pa-4">
             <v-overlay
                 absolute 
+                class="pa-4"
                 :value="errorList.length">
                 Não é possível iniciar a simulação. Por favor resolva os erros listados e tente novamente.
             </v-overlay>
-            <v-text-field
-                v-if="showStepTextField"
-                label="Condição de avanço"
-                v-model="advanceProcessText"
-                placeholder="Insira a condição de avanço para o step atual" />
+
+            <v-expand-transition>
+                <v-text-field
+                    v-if="showStepTextField"
+                    label="Condição de avanço"
+                    v-model="advanceProcessText"
+                    placeholder="Insira a condição de avanço para o step atual" />
+            </v-expand-transition>
             <v-btn
+                block
                 color="primary"
                 @click="advanceProcess">
                 Avançar processo
             </v-btn>
+
+            <v-btn
+                block
+                class="my-3"
+                color="primary"
+                @click="initProcessExample">
+                Resetar simulação
+            </v-btn>
+
+
+            <h6 class="mt-4">*O simulador de processos está em fase experimental e pode não funcionar corretamente. Alguns ajustes ainda estão sendo feitos.</h6>
         </v-card>
     </div>
     
@@ -59,7 +75,8 @@ export default {
             currentStep: [],
             errorList: [],
             advanceConditions: [],
-            showStepTextField: false
+            showStepTextField: false,
+            finished: false
         }
     },
     computed: {
@@ -81,7 +98,7 @@ export default {
                 this.getStepsElements();
                 this.xmlData = undefined;
                 this.loading = false
-            },100)
+            },20)
 
         },
         getStepsElements() {
@@ -152,6 +169,7 @@ export default {
             this.advanceConditions = [];
             this.advanceProcessText = undefined;
             this.showStepTextField = false
+            this.finished = false
         },
         getAdvanceConditions(item) {
             if (item.outgoing && item.outgoing.length > 1) {
@@ -161,9 +179,12 @@ export default {
             }
         },
         advanceProcess() {
-            const nextStepId = this.currentStep.businessObject.outgoing.map(item => {
-                return item.targetRef.id
-            })
+            let nextStepId = []
+            if (this.currentStep.businessObject.outgoing) {
+                nextStepId = this.currentStep.businessObject.outgoing.map(item => {
+                    return item.targetRef.id
+                })
+            }
 
             this.showStepTextField = nextStepId.length > 1
 
@@ -199,14 +220,37 @@ export default {
                     this.advanceProcessUpdateColor(advanceStepId[0].targetRef.id)
 
                 }
+            } 
+            else if (!nextStepId.length ) {
+                if (!this.finished) {
+                    this.modeling.setColor(this.currentStep, {
+                        fill: '#00FF1EB2',
+                        stroke: 'black' 
+                    })
+                    this.finished = true
+                    this.$notify({
+                        group: 'foo',
+                        type: 'success',
+                        title: "Processo finalizado",
+                        text: "Caso queira você pode reiniciar a simulação."
+                    });
+                } 
+                else {
+                    this.$notify({
+                        group: 'foo',
+                        type: 'error',
+                        title: "Processo finalizado",
+                        text: "Nao é possível avançar esse processo pois ele já está finalizado."
+                    });
+                }
             }
         },
         advanceProcessUpdateColor(id) {
             const elementRegistry = this.modeler.get('elementRegistry');
             this.modeling.setColor(this.currentStep, {
-                    fill: '#00FF1EB2',
-                    stroke: 'black' 
-                })
+                fill: '#00FF1EB2',
+                stroke: 'black' 
+            })
             this.currentStep = elementRegistry.get(id)
             this.modeling.setColor(this.currentStep, {
                 fill: '#0076FD9D',
@@ -241,7 +285,7 @@ export default {
             height: 100%;
             width: 100%;
             position: absolute;
-            z-index: 9999;
+            z-index: 1;
             top:0;
             left: 0;
         }
