@@ -226,7 +226,7 @@
                             href="#"
                             icon
                             v-on="on"
-                            @click="downloadWorkflow" 
+                            @click="downloadWorkflow('downloadWorkflow')" 
                             id="downloadWorkflow">
                             <v-icon color="white">mdi-download</v-icon>
                         </v-btn>
@@ -272,6 +272,7 @@
             <v-tabs 
                 hide-slider 
                 icons-and-text
+                v-model="tabs"
                 @change="updateTabs">
                 <v-tab>
                     Workflow
@@ -297,6 +298,10 @@
                     transition="none"
                     eager>
                     <workflow-editor
+                        @editWf="openWorkflowDialog(false)"
+                        @downloadWf="downloadWorkflow"
+                        @processWf="initProcessSimulation"
+                        @imageWf="generateImage"
                         @selectedElem="selSelectedElem"
                         ref='wfEditor'/>
 
@@ -406,7 +411,8 @@ export default {
             changingWorkflow: false,
             stepIdColor: undefined,
             stepColor: undefined,
-            selectedElem: undefined
+            selectedElem: undefined,
+            tabs: 0,
         }
     },
     computed: {
@@ -427,8 +433,8 @@ export default {
             'setWorkflowId',
             'setSteps'
         ]),
-        downloadWorkflow() {
-            this.$refs.wfEditor.generateJSON();
+        downloadWorkflow(id) {
+            this.$refs.wfEditor.generateJSON(id);
         },
         selSelectedElem(elem) {
             this.stepIdColor = elem.id;
@@ -447,6 +453,10 @@ export default {
                     await this.$refs.processExample.initProcessExample();
                     break
             }
+        },
+        async initProcessSimulation() {
+            this.tabs = 3
+            await this.$refs.processExample.initProcessExample()
         },
         openWorkflowDialog(newWf) {
             this.workflowDialogEdit = true

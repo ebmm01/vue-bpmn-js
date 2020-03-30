@@ -3,11 +3,75 @@
         <v-card
             style="overflow:hidden;"
             class="ma-4 pa-4">
-            <div id="canvas"></div>
+            <div 
+                @click="contextMenu = false"
+                @contextmenu.stop.prevent="showEvents"
+                id="canvas"></div>
             <v-expand-x-transition mode="out-in">
                 <workflow-properties-editor
                     v-if="selectedStep"/>
             </v-expand-x-transition>
+            <v-slide-y-transition >
+                <div
+                    v-if="contextMenu"
+                    class="contextMenu elevation-4"
+                    :key="contextMenuPositionComputed"
+                    :style="contextMenuPositionComputed">
+                    <div
+                        v-if="selectedElem">
+                        <v-subheader>{{selectedElem.type.replace("bpmn:", "")}}</v-subheader>
+                        <a 
+                            v-ripple
+                            v-if="selectedStep"
+                            href="#"
+                            @click="startConnect"
+                            class="contextMenuItem">
+                            <v-icon class="mr-3">mdi-arrow-top-right</v-icon> Conectar elemento
+                        </a>
+                        <a 
+                            id="downloadWf"
+                            v-ripple
+                            href="#"
+                            @click="removeSelectedElements(selectedElem)"
+                            class="contextMenuItem">
+                            <v-icon class="mr-3">mdi-delete</v-icon> Excluir
+                        </a>
+
+                        <hr>
+                    </div>
+                    <v-subheader>Workflow</v-subheader>
+                    <a 
+                        id="downloadWf"
+                        v-ripple
+                        href="#"
+                        @click="generateJSON('downloadWf')"
+                        class="contextMenuItem">
+                        <v-icon class="mr-3">mdi-download</v-icon> Baixar workflow
+                    </a>
+                    <a 
+                        v-ripple
+                        href="#"
+                        @click="handleEvent('editWf')"
+                        class="contextMenuItem">
+                        <v-icon class="mr-3">mdi-pencil</v-icon> Editar workflow
+                    </a>
+                    <a 
+                        v-ripple
+                        href="#"
+                        @click="handleEvent('imageWf')"
+                        class="contextMenuItem">
+                        <v-icon class="mr-3">mdi-image-plus</v-icon> Gerar imagem
+                    </a>
+                    <a 
+                        v-ripple
+                        href="#"
+                        @click="handleEvent('processWf')"
+                        class="contextMenuItem">
+                        <v-icon class="mr-3">mdi-crane</v-icon> Simular Processo
+                    </a>
+                    
+                </div>
+            </v-slide-y-transition>
         </v-card>
         <div
             id="canvas-actions">
@@ -47,18 +111,14 @@ import convert from 'xml-js';
 import { mapActions, mapState } from 'vuex'
 
 export default {
-    props: {
-        downloadWorkflow: {
-            default: false
-        },
-        forceUpdate: {
-            default: false
-        }
-    },
     components: {
         "workflow-properties-editor": ()=> import("./WorkflowPropertiesEditor")
     },
-    data: () => ({}),
+    data: () => ({
+        contextMenu: false,
+        contextMenuPosition: {},
+        selectedElem: undefined
+    }),
     computed: {
         ...mapState([
             'workflowName',
@@ -74,6 +134,9 @@ export default {
         elementRegistry() {
             return this.modeler.get('elementRegistry');
         },
+        contextMenuPositionComputed() {
+            return `top: ${this.contextMenuPosition.y}px; left: ${this.contextMenuPosition.x}px; `
+        }
     },
     methods: {
         ...mapActions([
@@ -82,6 +145,24 @@ export default {
             'setWorkflowData',
             'selectComponent',
         ]),
+        showEvents(event) {
+            const parent = document.getElementById("canvas").getBoundingClientRect()
+            this.contextMenuPosition = {
+                x: event.pageX - parent.x + 15,
+                y: event.pageY - parent.y + 15
+            }
+            this.contextMenu = true
+        },
+        handleEvent(event) {
+            this.contextMenu = false
+            this.$emit(event)
+        },
+        startConnect(event) {
+            this.contextMenu = false
+            const connection = this.modeler.get('connect')
+            const elem = this.elementRegistry.get(this.selectedStep.id);
+            connection.start(event, elem)
+        },
         getModelData(){
             let exportJSON = {};
 
@@ -96,10 +177,10 @@ export default {
 
             return exportJSON
         },
-        generateJSON() {
+        generateJSON(id) {
             const model = this.getModelData()
             let data = "text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(model));
-            let downloadWorkflowBtn = document.getElementById('downloadWorkflow');
+            let downloadWorkflowBtn = document.getElementById(id || 'downloadWorkflow');
             downloadWorkflowBtn.href = 'data:'+ data
             downloadWorkflowBtn.download = `${model.name.toLowerCase()}.json`
             setTimeout(() => downloadWorkflowBtn.href = "#", 300)
@@ -135,19 +216,24 @@ export default {
 
             eventBus.on('element.click', (e) =>{
                 
-                if (e.element.type === "bpmn:Task") {
-                    this.selectStep(e.element.businessObject);
-                    this.selectComponent({
-                        c_name:e.element.businessObject.$attrs.c_name,
-                        c_description:e.element.businessObject.$attrs.c_description,
-                        c_relatedStep:e.element.businessObject.$attrs.c_relatedStep,
-                        c_type:e.element.businessObject.$attrs.c_type,
-                        c_alias:e.element.businessObject.$attrs.c_alias,
-                        c_queueConfig:e.element.businessObject.$attrs.c_queueConfig,
-                    });
-                } else {
+                if (e.element.type === "bpmn:Process") {
+                    this.selectedElem = undefined
                     this.selectStep(undefined);
                     this.selectComponent(undefined);
+                } 
+                else {
+                    this.selectedElem = e.element
+                    if (e.element.type === "bpmn:Task") {
+                        this.selectStep(e.element.businessObject);
+                        this.selectComponent({
+                            c_name:e.element.businessObject.$attrs.c_name,
+                            c_description:e.element.businessObject.$attrs.c_description,
+                            c_relatedStep:e.element.businessObject.$attrs.c_relatedStep,
+                            c_type:e.element.businessObject.$attrs.c_type,
+                            c_alias:e.element.businessObject.$attrs.c_alias,
+                            c_queueConfig:e.element.businessObject.$attrs.c_queueConfig,
+                        });
+                    }
                 }
             });
 
@@ -184,9 +270,16 @@ export default {
         redoAction() {
             this.modeler.get('commandStack').redo()
         },
-        removeSelectedElements() {
-            const selection = this.modeler.get('selection')
-            let selectedElements = selection.get();
+        removeSelectedElements(elem) {
+            let selectedElements = undefined;
+            if (elem) {
+                selectedElements = [elem]
+            } 
+            else {
+                const selection = this.modeler.get('selection')
+                selectedElements = selection.get();
+            }
+            this.contextMenu = false
 
             this.modeling.removeElements(selectedElements)
         },
@@ -215,12 +308,18 @@ export default {
 #canvas {
     height: 650px;
     width: 100%;
+    position: relative;
 }
 
 .bjs-powered-by {
     left: 15px !important;
     right: unset !important;
 }
+
+.djs-context-pad.open {
+    display: none !important;
+}
+
 #workflow-editor {
     position: relative;
 }
@@ -248,6 +347,32 @@ export default {
                 color: rgb(255, 116, 0);
             }
         }
+    }
+}
+
+.contextMenu {
+    position: absolute;
+    width: 230px;
+    background: white;
+
+    .contextMenuItem {
+        height: 40px;
+        display: flex;
+        align-items: center;
+        padding: 15px;
+        text-decoration: none;
+        transition: all 0.15s ease;
+        color: rgba(0, 0, 0, 0.85);
+        cursor: pointer;
+
+        &:hover {
+            background: rgba(0, 0, 0, 0.2);
+
+        }
+    }
+
+    .v-subheader {
+        height: 40px !important;
     }
 }
 </style>

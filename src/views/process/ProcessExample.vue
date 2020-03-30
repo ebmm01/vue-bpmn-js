@@ -53,7 +53,6 @@
                 Resetar simulação
             </v-btn>
 
-
             <h6 class="mt-4">*O simulador de processos está em fase experimental e pode não funcionar corretamente. Alguns ajustes ainda estão sendo feitos.</h6>
         </v-card>
     </div>
@@ -103,7 +102,7 @@ export default {
         },
         getStepsElements() {
             this.initializeVariables();
-            const elementRegistry = this.modeler.get('elementRegistry');
+            const elementRegistry = this.viewer.get('elementRegistry');
             const elementList = elementRegistry.getAll();	
             const taskList = elementList.filter(elem => elem.type === "bpmn:Task");
             taskList.map(item => {
