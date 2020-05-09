@@ -571,8 +571,7 @@ export default {
                 this.$refs.componentsEditor.getComponents();
                 setTimeout(async () => await this.$refs.processExample.initProcessExample(), 200)
                 
-            } catch(error) {
-                console.log(error)
+            } catch {
                 return
             }
             
