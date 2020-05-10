@@ -117,13 +117,15 @@ export default {
     data: () => ({
         contextMenu: false,
         contextMenuPosition: {},
-        selectedElem: undefined
+        selectedElem: undefined,
+        webSocket: undefined
     }),
     computed: {
         ...mapState([
             'workflowName',
             'workflowData',
             'workflowDescription',
+            'workflowId',
             'steps',
             'modeler',
             'selectedStep'
@@ -167,7 +169,6 @@ export default {
             let exportJSON = {};
 
             this.modeler.saveXML({ format: true }, (err, xml) => {
-                const xmlClone = xml;
                 exportJSON.modeler = convert.xml2json(xml, {compact: true, trim: true});
             });
 
@@ -190,16 +191,20 @@ export default {
             if (!this.workflowData) {
                 loadDiagram = require('../../plugins/emptyDiagram.json')
             } else {
-                loadDiagram = this.workflowData
+                if (typeof this.workflowData === 'string') {
+                    loadDiagram = JSON.parse(this.workflowData)
+                } 
+                else {
+                    loadDiagram = this.workflowData
+                }
             }
-
             let importedModel = convert.json2xml(loadDiagram, {compact: true})
             importedModel = importedModel.replace('<default>',"")
             importedModel = importedModel.replace('</default>',"")
 
-            this.modeler.importXML(importedModel);
-            
-            this.setWorkflowData(undefined)
+            this.modeler.importXML(importedModel, err => {
+                if (err) console.log(err)
+            });
         },
         setHandlers() {
             const eventBus = this.modeler.get('eventBus');
@@ -217,15 +222,15 @@ export default {
             eventBus.on('element.click', (e) =>{
                 
                 if (e.element.type === "bpmn:Process") {
-                    this.selectedElem = undefined
-                    this.selectStep(undefined);
-                    this.selectComponent(undefined);
+                    _this.selectedElem = undefined
+                    _this.selectStep(undefined);
+                    _this.selectComponent(undefined);
                 } 
                 else {
-                    this.selectedElem = e.element
+                    _this.selectedElem = e.element
                     if (e.element.type === "bpmn:Task") {
-                        this.selectStep(e.element.businessObject);
-                        this.selectComponent({
+                        _this.selectStep(e.element.businessObject);
+                        _this.selectComponent({
                             c_name:e.element.businessObject.$attrs.c_name,
                             c_description:e.element.businessObject.$attrs.c_description,
                             c_relatedStep:e.element.businessObject.$attrs.c_relatedStep,
@@ -237,8 +242,16 @@ export default {
                 }
             });
 
+            eventBus.on('element.changed', e => {
+
+                if (e.element.type === "bpmn:Task") {
+                    _this.notifyUpdateToServer()
+                }
+            })
+
             eventBus.on('commandStack.shape.create.postExecute', (e) =>{
                 if (e.context.shape.type === "bpmn:Task") {
+                    this.notifyUpdateToServer()
                     const selectedElem = this.elementRegistry.get(e.context.shape.id)
                     const component = {
                         c_name: selectedElem.id.replace("Activity", "Component"),
@@ -248,21 +261,23 @@ export default {
                         c_alias: "",
                         c_queueConfig: ""
                     }
-                    this.modeling.updateProperties(selectedElem, {...component});
-                    this.selectStep(selectedElem.businessObject);
-                    this.selectComponent(component);
+                    _this.modeling.updateProperties(selectedElem, {...component});
+                    _this.selectStep(selectedElem.businessObject);
+                    _this.selectComponent(component);
                 } else {
-                    this.selectStep(undefined);
-                    this.selectComponent(undefined);
+                    _this.selectStep(undefined);
+                    _this.selectComponent(undefined);
                 }
             });
 
-            eventBus.on(["shape.remove","shape.delete" ], e => {
+            eventBus.on("shape.remove", e => {
                 if (e.element.type === "bpmn:Task") {
                     this.selectStep(undefined);
                     this.selectComponent(undefined);
                 }
             })
+
+            
         },
         undoAction() {
             this.modeler.get('commandStack').undo()
@@ -288,7 +303,32 @@ export default {
             if (elements.length) {
                 this.modeling.removeElements(elements)
             }
-        }
+        },
+        async configureWebsocketHandlers() {
+            const _this = this
+            this.webSocket.onmessage = async msg => {
+                const data = JSON.parse(msg.data)
+
+                if (data.type === 'updateWorkflow') {
+                    _this.setWorkflowData(data.modelData)
+                    await _this.loadDiagram()
+                }
+            }
+        },
+        notifyUpdateToServer() {
+            const _this = this
+            this.modeler.saveXML({ format: true }, (err, xml) => {
+                if (err) {
+                    console.log(err)
+                    return
+                }
+                const data = convert.xml2json(xml, {compact: true, trim: true});
+                _this.webSocket.send(JSON.stringify({
+                    modelData: data,
+                    type: 'updateWorkflow'
+                }))
+            });
+        },
     },
     async mounted() {
         this.changeModeler(new Modeler({ 
@@ -298,6 +338,18 @@ export default {
             ],
             taskResizingEnabled: true    
         }))
+        this.webSocket = new WebSocket('ws://'+process.env.VUE_APP_SERVER_URL+'ws');
+        
+        this.configureWebsocketHandlers()
+
+        const _this = this
+        setTimeout(() => {
+            _this.webSocket.send(JSON.stringify({
+                addToWorkflow: true,
+                modelData: this.workflowData,
+                workflowId: this.workflowId
+            }))
+        }, 500)
         this.loadDiagram()
         this.setHandlers()
     }
