@@ -203,7 +203,7 @@ export default {
             importedModel = importedModel.replace('</default>',"")
 
             this.modeler.importXML(importedModel, err => {
-                if (err) console.log(err)
+                throw err
             });
         },
         setHandlers() {
@@ -319,7 +319,7 @@ export default {
             const _this = this
             this.modeler.saveXML({ format: true }, (err, xml) => {
                 if (err) {
-                    console.log(err)
+                    throw err
                     return
                 }
                 const data = convert.xml2json(xml, {compact: true, trim: true});
@@ -338,7 +338,7 @@ export default {
             ],
             taskResizingEnabled: true    
         }))
-        this.webSocket = new WebSocket('ws://'+process.env.VUE_APP_SERVER_URL+'ws');
+        this.webSocket = new WebSocket(process.env.VUE_APP_WEBSOCKET_URL);
         
         this.configureWebsocketHandlers()
 
