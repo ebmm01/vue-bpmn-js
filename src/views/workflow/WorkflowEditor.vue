@@ -202,9 +202,7 @@ export default {
             importedModel = importedModel.replace('<default>',"")
             importedModel = importedModel.replace('</default>',"")
 
-            this.modeler.importXML(importedModel, err => {
-                throw err
-            });
+            this.modeler.importXML(importedModel);
         },
         setHandlers() {
             const eventBus = this.modeler.get('eventBus');
@@ -314,6 +312,11 @@ export default {
                     await _this.loadDiagram()
                 }
             }
+
+            this.webSocket.onclose = async msg => {
+                _this.webSocket = new WebSocket(process.env.VUE_APP_WEBSOCKET_URL);
+                _this.configureWebsocketHandlers()
+            }
         },
         notifyUpdateToServer() {
             const _this = this
@@ -323,12 +326,42 @@ export default {
                     return
                 }
                 const data = convert.xml2json(xml, {compact: true, trim: true});
-                _this.webSocket.send(JSON.stringify({
+                _this.sendMessageToSocket({
                     modelData: data,
                     type: 'updateWorkflow'
-                }))
+                })
             });
         },
+        notifyWorkflowChangeToServer(oldWorkflow) {
+            const _this = this
+            this.modeler.saveXML({ format: true }, (err, xml) => {
+                if (err) {
+                    throw err
+                    return
+                }
+                const data = convert.xml2json(xml, {compact: true, trim: true});
+                _this.sendMessageToSocket({
+                    type: 'clientWorkflowChanged',
+                    newWorkflow: this.workflowId,
+                    oldWorkflow,
+                    modelData: data
+                })
+            });
+        },
+        sendMessageToSocket(msg) {
+            if (typeof msg === "object") {
+                msg = JSON.stringify(msg)
+            }
+            try {
+                this.webSocket.send(msg)
+            }
+             catch {
+                 const _this = this
+                 setTimeout(() => {
+                    _this.sendMessageToSocket((msg))
+                }, 500)
+             }
+        }
     },
     async mounted() {
         this.changeModeler(new Modeler({ 
@@ -338,18 +371,17 @@ export default {
             ],
             taskResizingEnabled: true    
         }))
+
         this.webSocket = new WebSocket(process.env.VUE_APP_WEBSOCKET_URL);
         
         this.configureWebsocketHandlers()
+        
+        this.sendMessageToSocket({
+            addToWorkflow: true,
+            modelData: this.workflowData,
+            workflowId: this.workflowId
+        })
 
-        const _this = this
-        setTimeout(() => {
-            _this.webSocket.send(JSON.stringify({
-                addToWorkflow: true,
-                modelData: this.workflowData,
-                workflowId: this.workflowId
-            }))
-        }, 500)
         this.loadDiagram()
         this.setHandlers()
     }

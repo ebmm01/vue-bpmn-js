@@ -560,6 +560,7 @@ export default {
             let response = undefined
             let wfId = id? id : this.workflowId
             try {
+                const oldWorkflow = this.workflowId;
                 response = await axios.get(`/wfModel/${wfId}`);
                 this.changeWorkflowName(response.data.name)
                 this.changeWorkflowDescription(response.data.description)
@@ -569,6 +570,7 @@ export default {
                 await this.$refs.wfEditor.loadDiagram()
                 this.$refs.stepsEditor.getSteps();
                 this.$refs.componentsEditor.getComponents();
+                this.$refs.wfEditor.notifyWorkflowChangeToServer(oldWorkflow);
                 setTimeout(async () => await this.$refs.processExample.initProcessExample(), 200)
                 
             } catch {
