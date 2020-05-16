@@ -100,7 +100,19 @@
                 <v-icon>mdi-layers-off</v-icon>
             </v-btn>
         </div>
-            
+        <div class="clientList">
+            <v-slide-x-transition 
+                group
+                mode="out-in">
+                <div
+                    v-for="(item, index) in clientList"
+                    :key="index" 
+                    :style="`z-index: ${100 - index}`"
+                    class="clientList-client">
+                    <v-icon color="#1976d2">mdi-account</v-icon>
+                </div>
+            </v-slide-x-transition >
+        </div>
     </div>
 </template>
 
@@ -118,7 +130,8 @@ export default {
         contextMenu: false,
         contextMenuPosition: {},
         selectedElem: undefined,
-        webSocket: undefined
+        webSocket: undefined,
+        clientList: ['123123123']
     }),
     computed: {
         ...mapState([
@@ -311,12 +324,19 @@ export default {
                     _this.setWorkflowData(data.modelData)
                     await _this.loadDiagram()
                 }
+
+                if(data.type === 'clientList') {
+                    _this.updateClientList(data.clients)
+                }
             }
 
             this.webSocket.onclose = async msg => {
                 _this.webSocket = new WebSocket(process.env.VUE_APP_WEBSOCKET_URL);
                 _this.configureWebsocketHandlers()
             }
+        },
+        updateClientList(clientList) {
+            this.clientList = clientList
         },
         notifyUpdateToServer() {
             const _this = this
@@ -457,6 +477,26 @@ export default {
 
     .v-subheader {
         height: 40px !important;
+    }
+}
+
+.clientList {
+    position: absolute;
+    top: 0px;
+    right: 50%;
+    transform: translate(50%, 50%);
+    display: flex;
+
+    .clientList-client {
+        color: #1976d2;
+        background: white;
+        border: 2px solid #1976d2;
+        border-radius: 50%;
+        margin-left: -9px;
+    }
+
+    > span {
+        display: flex;
     }
 }
 </style>
