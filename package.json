@@ -9,7 +9,7 @@
     "start": "node server/server.js"
   },
   "dependencies": {
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "bpmn-js": "^6.3.3",
     "bpmn-js-properties-panel": "^0.33.2",
     "bpmn-js-task-resize": "^1.1.0",
